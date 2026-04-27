@@ -41,6 +41,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(data.isBundle !== undefined && { isBundle: Boolean(data.isBundle) }),
         ...(data.isPublished !== undefined && { isPublished: Boolean(data.isPublished) }),
         ...(data.youtubeUrl !== undefined && { youtubeUrl: String(data.youtubeUrl || '').trim() }),
+        ...(data.fileUrl !== undefined && { fileUrl: String(data.fileUrl || '').trim() }),
       },
     });
     return NextResponse.json(product);

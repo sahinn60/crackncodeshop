@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
       isBundle: data.isBundle ?? false,
       isPublished: data.isPublished ?? true,
       youtubeUrl: String(data.youtubeUrl || '').trim(),
+      fileUrl: String(data.fileUrl || '').trim(),
     },
   });
   return NextResponse.json(product, { status: 201 });

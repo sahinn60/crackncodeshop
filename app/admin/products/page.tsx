@@ -7,10 +7,10 @@ import { Plus, Trash2, X, Pencil } from 'lucide-react';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { Price } from '@/components/ui/Price';
 
-interface Product { id: string; title: string; description: string; longDescription: string; price: number; oldPrice: number | null; imageUrl: string; category: string; features: string; format: string; rating: number; reviewCount: number; isTopSelling: boolean; isBundle: boolean; isPublished: boolean; createdAt: string }
+interface Product { id: string; title: string; description: string; longDescription: string; price: number; oldPrice: number | null; imageUrl: string; fileUrl: string; category: string; features: string; format: string; rating: number; reviewCount: number; isTopSelling: boolean; isBundle: boolean; isPublished: boolean; createdAt: string }
 interface Category { id: string; name: string; children: Category[] }
 
-const emptyForm = { title: '', description: '', longDescription: '', price: '', oldPrice: '', imageUrl: '', category: '', features: '', format: '', rating: '', reviewCount: '', isTopSelling: false, isBundle: false, isPublished: true, youtubeUrl: '' };
+const emptyForm = { title: '', description: '', longDescription: '', price: '', oldPrice: '', imageUrl: '', fileUrl: '', category: '', features: '', format: '', rating: '', reviewCount: '', isTopSelling: false, isBundle: false, isPublished: true, youtubeUrl: '' };
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -37,6 +37,7 @@ export default function AdminProductsPage() {
       price: String(p.price),
       oldPrice: p.oldPrice ? String(p.oldPrice) : '',
       imageUrl: p.imageUrl,
+      fileUrl: p.fileUrl || '',
       category: p.category,
       features: (() => { try { return JSON.parse(p.features).join('\n'); } catch { return p.features; } })(),
       format: p.format,
@@ -62,7 +63,7 @@ export default function AdminProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, price: parseFloat(form.price), oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null, features: form.features.split('\n').filter(Boolean), rating: parseFloat(form.rating) || 0, reviewCount: parseInt(form.reviewCount) || 0, youtubeUrl: form.youtubeUrl };
+    const payload = { ...form, price: parseFloat(form.price), oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null, features: form.features.split('\n').filter(Boolean), rating: parseFloat(form.rating) || 0, reviewCount: parseInt(form.reviewCount) || 0, youtubeUrl: form.youtubeUrl, fileUrl: form.fileUrl };
     if (editingId) {
       await apiClient.put(`/products/${editingId}`, payload);
     } else {
@@ -110,6 +111,23 @@ export default function AdminProductsPage() {
                 folder="crackncode/products"
                 previewClass="h-40 w-full rounded-xl"
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">📁 Download File URL</label>
+                <input
+                  type="text"
+                  value={form.fileUrl}
+                  onChange={e => setForm(p => ({ ...p, fileUrl: e.target.value }))}
+                  placeholder="Google Drive link, direct URL, or any file link"
+                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-gray-400">Paste the direct download link (Google Drive, Dropbox, S3, or any URL). This is the file users will download after purchase.</p>
+                {form.fileUrl && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-green-600 text-xs">✓ File URL set</span>
+                    <a href={form.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline ml-auto">Preview link →</a>
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} required className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none">
@@ -189,6 +207,7 @@ export default function AdminProductsPage() {
                     {p.isTopSelling && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700">⭐ Top</span>}
                     {p.isBundle && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700">📦 Bundle</span>}
                     {p.isPublished ? <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700">Published</span> : <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">Draft</span>}
+                    {p.fileUrl ? <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">📁 File</span> : <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-400">No file</span>}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">{new Date(p.createdAt).toLocaleDateString()}</td>
