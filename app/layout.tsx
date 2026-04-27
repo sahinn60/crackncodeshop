@@ -3,6 +3,7 @@ import { Inter, Open_Sans } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SplashScreen } from "@/components/providers/SplashScreen";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans font-light tracking-tight bg-light text-dark">
         <SettingsProvider>
           <AuthProvider>
-            {children}
+            <SplashScreen>
+              {children}
+            </SplashScreen>
           </AuthProvider>
         </SettingsProvider>
       </body>
