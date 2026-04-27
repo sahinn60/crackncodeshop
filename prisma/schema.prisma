@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  password       String
+  role           String         @default("USER") // USER | ADMIN | SUB_ADMIN
+  permissions    String         @default("[]")   // JSON array for SUB_ADMIN
+  credentialKey  String?        @unique          // unique login key for sub-admins
+  avatarUrl      String         @default("")
+  bio            String         @default("")
+  createdAt      DateTime       @default(now())
+  orders         Order[]
+  refreshTokens  RefreshToken[]
+  downloadTokens DownloadToken[]
+  reviews        Review[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Product {
+  id              String          @id @default(cuid())
+  title           String
+  description     String
+  longDescription String          @default("")
+  price           Float
+  imageUrl        String
+  fileUrl         String          @default("") // actual download file
+  rating          Float           @default(0)
+  reviewCount     Int             @default(0)
+  category        String
+  features        String          @default("[]")
+  lastUpdated     String          @default("")
+  format          String          @default("")
+  oldPrice        Float?                         // original price before discount
+  downloadLimit   Int             @default(5)   // max downloads per purchase
+  isPublished     Boolean         @default(true)
+  isTopSelling    Boolean         @default(false)
+  isBundle        Boolean         @default(false)
+  youtubeUrl      String          @default("")
+  createdAt       DateTime        @default(now())
+  orderItems      OrderItem[]
+  downloadTokens  DownloadToken[]
+  reviews         Review[]
+  bundleItems     BundleItem[]
+  flashSaleItems  FlashSaleItem[]
+
+  @@index([category])
+  @@index([isPublished])
+  @@index([createdAt])
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  userId                String
+  total                 Float
+  status                String      @default("PENDING") // PENDING | COMPLETED | REFUNDED | CANCELLED
+  epsTransactionId      String      @default("")
+  epsMerchantTxId       String      @default("")
+  createdAt             DateTime    @default(now())
+  user                  User        @relation(fields: [userId], references: [id])
+  items                 OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id             String          @id @default(cuid())
+  orderId        String
+  productId      String
+  price          Float
+  downloadCount  Int             @default(0)
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id])
+  downloadTokens DownloadToken[]
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model DownloadToken {
+  id          String    @id @default(cuid())
+  token       String    @unique @default(cuid())
+  userId      String
+  productId   String
+  orderItemId String
+  usedCount   Int       @default(0)
+  maxUses     Int       @default(5)
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id])
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int      // 1-5
+  comment   String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  date      String   // YYYY-MM-DD
+  ip        String
+  path      String
+  device    String   @default("unknown") // desktop | mobile | tablet
+  browser   String   @default("")
+  country   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([date])
+  @@index([ip])
+  @@index([path])
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  slug        String     @unique
+  imageUrl    String     @default("")
+  parentId    String?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("SubCategories")
+  createdAt   DateTime   @default(now())
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+model Bundle {
+  id            String       @id @default(cuid())
+  name          String
+  slug          String       @unique
+  description   String       @default("")
+  imageUrl      String       @default("")
+  discount      Float        @default(0) // percentage discount e.g. 40 = 40%
+  isActive      Boolean      @default(true)
+  isDailyTimer  Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  items         BundleItem[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model BundleItem {
+  id        String  @id @default(cuid())
+  bundleId  String
+  productId String
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleId, productId])
+  @@index([bundleId])
+  @@index([productId])
+}
+
+model UpsellRule {
+  id              String   @id @default(cuid())
+  sourceProductId String
+  targetProductId String
+  type            String   // RELATED | FREQUENTLY_BOUGHT | UPGRADE | POST_PURCHASE
+  priority        Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  @@unique([sourceProductId, targetProductId, type])
+  @@index([sourceProductId])
+  @@index([type])
+}
+
+model Coupon {
+  id        String   @id @default(cuid())
+  title     String
+  code      String   @unique
+  discount  String   // e.g. "20%" or "50 BDT"
+  message   String   // display message e.g. "Spring Sale: 20% OFF"
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0)
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
+  @@index([priority])
+}
+
+model Settings {
+  id                String  @id @default("singleton")
+  siteName          String  @default("Crackncode")
+  logoUrl           String  @default("")
+  faviconUrl        String  @default("")
+  heroBannerUrl     String  @default("")
+  bannerImages      String  @default("[]") // JSON array of {url, link, alt}
+  facebookPixelId   String  @default("")
+  tiktokPixelId     String  @default("")
+  googleAnalyticsId String  @default("")
+  tawktoScriptUrl   String  @default("")
+  socialTwitter     String  @default("")
+  socialFacebook    String  @default("")
+  socialInstagram   String  @default("")
+  maintenanceMode   Boolean @default(false)
+  footerText        String  @default("")
+}
+
+model FlashSale {
+  id                 String          @id @default(cuid())
+  title              String
+  discountPercentage Float           @default(0)
+  isDaily            Boolean         @default(true)
+  startTime          DateTime?       // custom timer start (UTC)
+  endTime            DateTime?       // custom timer end (UTC)
+  isActive           Boolean         @default(true)
+  createdAt          DateTime        @default(now())
+  items              FlashSaleItem[]
+
+  @@index([isActive])
+}
+
+model FlashSaleItem {
+  id          String    @id @default(cuid())
+  flashSaleId String
+  productId   String
+  flashSale   FlashSale @relation(fields: [flashSaleId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([flashSaleId, productId])
+  @@index([flashSaleId])
+  @@index([productId])
+}
+
+model LandingPage {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  productId   String?
+  sections    String   @default("[]") // JSON array of sections
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+}
+
+model BannedIp {
+  id        String   @id @default(cuid())
+  ip        String   @unique
+  reason    String   @default("")
+  bannedAt  DateTime @default(now())
+
+  @@index([ip])
+}
