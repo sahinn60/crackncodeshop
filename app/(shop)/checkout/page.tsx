@@ -481,9 +481,6 @@ export default function CheckoutPage() {
 
             </AnimatePresence>
 
-            {/* Recommended Products */}
-            <RecommendedProducts />
-
             {/* Navigation Buttons */}
             {step < 3 && (
               <div className="flex items-center justify-between mt-6">
@@ -505,6 +502,9 @@ export default function CheckoutPage() {
                 </Button>
               </div>
             )}
+
+            {/* Recommended Products */}
+            <RecommendedProducts />
           </div>
 
           {/* Order Summary Sidebar */}
