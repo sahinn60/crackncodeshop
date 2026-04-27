@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
   }
   const merchantTransactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const customerOrderId = `ORD${Date.now()}`;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  // Use the request origin so EPS redirects back to the correct domain
+  // (works for both localhost and production)
+  const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/[^/]*$/, '') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   try {
     const token = await getEpsToken();
@@ -52,9 +55,9 @@ export async function POST(req: NextRequest) {
       financialEntityId: 0,
       transitionStatusId: 0,
       totalAmount: total,
-      successUrl: `${appUrl}/checkout/success`,
-      failUrl: `${appUrl}/checkout/fail`,
-      cancelUrl: `${appUrl}/checkout/fail`,
+      successUrl: `${origin}/checkout/success?merchantTransactionId=${merchantTransactionId}`,
+      failUrl: `${origin}/checkout/fail`,
+      cancelUrl: `${origin}/checkout/fail`,
       customerName,
       customerEmail,
       customerAddress: 'N/A',

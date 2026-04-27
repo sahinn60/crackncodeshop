@@ -62,9 +62,10 @@ export async function POST(req: NextRequest) {
       data = await epsRes.json();
     }
 
-    // 3. Validate EPS response
-    if (data.Status !== 'Success')
-      return NextResponse.json({ error: data.ErrorMessage || 'Payment not successful', status: data.Status }, { status: 402 });
+    // 3. Validate EPS response — handle different casing
+    const epsStatus = data.Status || data.status || '';
+    if (epsStatus !== 'Success' && epsStatus !== 'success' && epsStatus !== 'SUCCESS')
+      return NextResponse.json({ error: data.ErrorMessage || data.errorMessage || `Payment not successful (${epsStatus})`, status: epsStatus }, { status: 402 });
 
     // 3b. Verify EPS response hash if provided (anti-tampering)
     if (data.VerificationHash) {
@@ -75,8 +76,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 3c. Verify the userId from EPS matches a real user
-    const userId = data.ValueA;
-    const productIds = data.ValueB?.split(',').filter(Boolean) ?? [];
+    const userId = data.ValueA || data.valueA || '';
+    const rawProductIds = data.ValueB || data.valueB || '';
+    const productIds = rawProductIds.split(',').filter(Boolean);
 
     if (!userId || productIds.length === 0)
       return NextResponse.json({ error: 'Missing order metadata' }, { status: 400 });
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest) {
     const expectedTotal = products.reduce((sum, p) => sum + p.price, 0);
 
     // Allow small tolerance for coupon discounts — total from EPS should be <= expected
-    const epsAmount = parseFloat(data.TotalAmount || data.totalAmount || '0');
+    const epsAmount = parseFloat(data.TotalAmount || data.totalAmount || data.Amount || data.amount || '0');
     if (epsAmount > 0 && epsAmount > expectedTotal * 1.01) {
       return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 });
     }
@@ -103,8 +105,8 @@ export async function POST(req: NextRequest) {
         userId,
         total,
         status: 'COMPLETED',
-        epsTransactionId: data.EPSTransactionId || epsTransactionId || '',
-        epsMerchantTxId: merchantTransactionId || '',
+        epsTransactionId: data.EPSTransactionId || data.epsTransactionId || epsTransactionId || '',
+        epsMerchantTxId: data.MerchantTransactionId || merchantTransactionId || '',
         items: { create: products.map(p => ({ productId: p.id, price: p.price })) },
       },
       include: { items: true },

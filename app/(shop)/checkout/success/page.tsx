@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { CheckCircle, ShieldCheck, Zap, Loader2 } from 'lucide-react';
-import { apiClient } from '@/lib/axios';
 import { PostPurchaseOffer } from '@/components/shop/UpsellBlock';
 
 function SuccessContent() {
@@ -21,24 +20,48 @@ function SuccessContent() {
 
   useEffect(() => {
     sessionStorage.removeItem('eps-payment-pending');
-    const merchantTransactionId = searchParams.get('merchantTransactionId');
-    const epsTransactionId = searchParams.get('EPSTransactionId');
+
+    // EPS may use different param name casing — check all variations
+    const merchantTransactionId =
+      searchParams.get('merchantTransactionId') ||
+      searchParams.get('MerchantTransactionId') ||
+      searchParams.get('merchant_transaction_id') ||
+      null;
+
+    const epsTransactionId =
+      searchParams.get('EPSTransactionId') ||
+      searchParams.get('epsTransactionId') ||
+      searchParams.get('eps_transaction_id') ||
+      searchParams.get('transactionId') ||
+      searchParams.get('TransactionId') ||
+      null;
 
     if (!merchantTransactionId && !epsTransactionId) {
       setStatus('error');
-      setErrorMsg('Missing transaction information.');
+      setErrorMsg('Missing transaction information. Please contact support.');
       return;
     }
 
-    apiClient.post('/eps/verify', { merchantTransactionId, epsTransactionId })
-      .then(({ data }) => {
+    // Use bare fetch to avoid apiClient auth interceptor issues
+    // (user's JWT may have expired during the EPS payment flow)
+    fetch('/api/eps/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ merchantTransactionId, epsTransactionId }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Verification failed');
+        return data;
+      })
+      .then((data) => {
         setOrderId(data.orderId);
         setPurchasedIds(data.productIds || []);
         clearCart();
         setStatus('success');
       })
-      .catch(err => {
-        setErrorMsg(err.response?.data?.error || 'Payment verification failed.');
+      .catch((err) => {
+        setErrorMsg(err.message || 'Payment verification failed.');
         setStatus('error');
       });
   }, []);
@@ -109,5 +132,13 @@ function SuccessContent() {
 }
 
 export default function CheckoutSuccessPage() {
-  return <Suspense fallback={<div className="min-h-[70vh] flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><SuccessContent /></Suspense>;
+  return (
+    <Suspense fallback={
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
+  );
 }
