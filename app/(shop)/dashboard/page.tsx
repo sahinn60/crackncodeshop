@@ -144,6 +144,7 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [grantedProducts, setGrantedProducts] = useState<{ id: string; title: string; imageUrl: string; category: string; price: number; hasFile: boolean }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('library');
   const [libDownloading, setLibDownloading] = useState<string | null>(null);
@@ -164,7 +165,10 @@ function DashboardContent() {
 
   useEffect(() => {
     if (!isAuthenticated) { router.push('/login'); return; }
-    apiClient.get('/orders').then(({ data }) => setOrders(data)).finally(() => setIsLoading(false));
+    apiClient.get('/orders').then(({ data }) => {
+      setOrders(data.orders || data);
+      setGrantedProducts(data.grantedProducts || []);
+    }).finally(() => setIsLoading(false));
   }, [isAuthenticated, router]);
 
   useEffect(() => {
@@ -195,9 +199,10 @@ function DashboardContent() {
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
   const memberSince = user ? new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
 
-  const completedProducts = orders
-    .filter(o => o.status === 'COMPLETED')
-    .flatMap(o => o.items);
+  const completedProducts = [
+    ...orders.filter(o => o.status === 'COMPLETED').flatMap(o => o.items),
+    ...grantedProducts.map(p => ({ id: '', product: { id: p.id, title: p.title, imageUrl: p.imageUrl, category: p.category }, price: p.price, downloadCount: 0, _granted: true })),
+  ];
 
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: 'library', label: 'My Library', icon: Package },
@@ -306,18 +311,22 @@ function DashboardContent() {
                         <div className="mt-3 flex gap-2">
                           <Button
                             size="sm"
-                            disabled={libDownloading === item.id}
+                            disabled={libDownloading === (item.id || item.product.id)}
                             onClick={() => {
-                              setLibDownloading(item.id);
+                              const key = item.id || item.product.id;
+                              setLibDownloading(key);
                               setLibDlError('');
-                              apiClient.post('/download/generate', { orderItemId: item.id })
+                              const payload = (item as any)._granted
+                                ? { productId: item.product.id }
+                                : { orderItemId: item.id };
+                              apiClient.post('/download/generate', payload)
                                 .then(({ data }) => window.open(data.downloadUrl, '_blank'))
                                 .catch((err: any) => setLibDlError(err.response?.data?.error || 'Download failed'))
                                 .finally(() => setLibDownloading(null));
                             }}
                             className="flex-1 h-9 text-xs gap-1.5 bg-primary hover:bg-[#E62828] text-white font-semibold"
                           >
-                            <Download className="h-3.5 w-3.5" /> {libDownloading === item.id ? '...' : 'Download'}
+                            <Download className="h-3.5 w-3.5" /> {libDownloading === (item.id || item.product.id) ? '...' : 'Download'}
                           </Button>
                           <Button size="sm" variant="outline" asChild className="h-9 text-xs gap-1.5">
                             <Link href={`/products/${item.product.id}`}><ExternalLink className="h-3.5 w-3.5" /></Link>

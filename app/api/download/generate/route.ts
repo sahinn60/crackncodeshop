@@ -7,64 +7,102 @@ export async function POST(req: NextRequest) {
   const { error, user } = requireAuth(req);
   if (error) return error;
 
-  const { orderItemId } = await req.json();
-  if (!orderItemId) return NextResponse.json({ error: 'orderItemId required' }, { status: 400 });
+  const { orderItemId, productId } = await req.json();
 
-  // 1. Find the order item and verify ownership
-  const orderItem = await prisma.orderItem.findUnique({
-    where: { id: orderItemId },
-    include: {
-      order: { select: { userId: true, status: true } },
-      product: { select: { id: true, downloadLimit: true, fileUrl: true } },
-    },
-  });
+  // Route 1: Download via purchase (orderItemId)
+  if (orderItemId) {
+    const orderItem = await prisma.orderItem.findUnique({
+      where: { id: orderItemId },
+      include: {
+        order: { select: { userId: true, status: true } },
+        product: { select: { id: true, downloadLimit: true, fileUrl: true } },
+      },
+    });
 
-  if (!orderItem)
-    return NextResponse.json({ error: 'Order item not found' }, { status: 404 });
+    if (!orderItem) return NextResponse.json({ error: 'Order item not found' }, { status: 404 });
+    if (orderItem.order.userId !== user!.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    if (orderItem.order.status !== 'COMPLETED') return NextResponse.json({ error: 'Order not completed' }, { status: 403 });
+    if (!orderItem.product.fileUrl) return NextResponse.json({ error: 'File not available yet' }, { status: 404 });
 
-  // 2. Verify user owns this order
-  if (orderItem.order.userId !== user!.id)
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    const totalDownloads = await prisma.downloadToken.aggregate({
+      where: { orderItemId },
+      _sum: { usedCount: true },
+    });
 
-  // 3. Verify order is completed
-  if (orderItem.order.status !== 'COMPLETED')
-    return NextResponse.json({ error: 'Order not completed' }, { status: 403 });
+    const limit = orderItem.product.downloadLimit || 5;
+    if ((totalDownloads._sum.usedCount || 0) >= limit)
+      return NextResponse.json({ error: `Download limit reached (${limit}). Contact support.` }, { status: 429 });
 
-  // 4. Check if file exists
-  if (!orderItem.product.fileUrl)
-    return NextResponse.json({ error: 'File not available yet' }, { status: 404 });
+    const token = crypto.randomBytes(32).toString('hex');
+    const dl = await prisma.downloadToken.create({
+      data: {
+        token,
+        userId: user!.id,
+        productId: orderItem.product.id,
+        orderItemId,
+        maxUses: 1,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
 
-  // 5. Check total downloads across all tokens for this order item
-  const totalDownloads = await prisma.downloadToken.aggregate({
-    where: { orderItemId },
-    _sum: { usedCount: true },
-  });
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    return NextResponse.json({
+      downloadUrl: `${baseUrl}/api/download?token=${dl.token}`,
+      expiresAt: dl.expiresAt,
+      remainingDownloads: limit - (totalDownloads._sum.usedCount || 0),
+    });
+  }
 
-  const limit = orderItem.product.downloadLimit || 5;
-  if ((totalDownloads._sum.usedCount || 0) >= limit)
-    return NextResponse.json({ error: `Download limit reached (${limit}). Contact support.` }, { status: 429 });
+  // Route 2: Download via admin-granted access (productId)
+  if (productId) {
+    const access = await prisma.userProductAccess.findUnique({
+      where: { userId_productId: { userId: user!.id, productId } },
+    });
 
-  // 6. Generate secure token with 10-minute expiry
-  const token = crypto.randomBytes(32).toString('hex');
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    if (!access) return NextResponse.json({ error: 'No access to this product' }, { status: 403 });
 
-  const dl = await prisma.downloadToken.create({
-    data: {
-      token,
-      userId: user!.id,
-      productId: orderItem.product.id,
-      orderItemId,
-      maxUses: 1, // single-use token
-      expiresAt,
-    },
-  });
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, fileUrl: true, downloadLimit: true },
+    });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const downloadUrl = `${baseUrl}/api/download?token=${dl.token}`;
+    if (!product || !product.fileUrl) return NextResponse.json({ error: 'File not available' }, { status: 404 });
 
-  return NextResponse.json({
-    downloadUrl,
-    expiresAt: dl.expiresAt,
-    remainingDownloads: limit - (totalDownloads._sum.usedCount || 0),
-  });
+    // Check download limit for granted access
+    const totalDownloads = await prisma.downloadToken.aggregate({
+      where: { productId, userId: user!.id },
+      _sum: { usedCount: true },
+    });
+
+    const limit = product.downloadLimit || 5;
+    if ((totalDownloads._sum.usedCount || 0) >= limit)
+      return NextResponse.json({ error: `Download limit reached (${limit}). Contact support.` }, { status: 429 });
+
+    // Create a dummy orderItem reference — use the first orderItem for this product if exists, or create token without it
+    const existingOrderItem = await prisma.orderItem.findFirst({
+      where: { productId, order: { userId: user!.id } },
+      select: { id: true },
+    });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const dl = await prisma.downloadToken.create({
+      data: {
+        token,
+        userId: user!.id,
+        productId,
+        orderItemId: existingOrderItem?.id || '',
+        maxUses: 1,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    return NextResponse.json({
+      downloadUrl: `${baseUrl}/api/download?token=${dl.token}`,
+      expiresAt: dl.expiresAt,
+      remainingDownloads: limit - (totalDownloads._sum.usedCount || 0),
+    });
+  }
+
+  return NextResponse.json({ error: 'orderItemId or productId required' }, { status: 400 });
 }

@@ -21,6 +21,7 @@ model User {
   refreshTokens  RefreshToken[]
   downloadTokens DownloadToken[]
   reviews        Review[]
+  productAccess  UserProductAccess[]
 
   @@index([email])
   @@index([role])
@@ -52,6 +53,7 @@ model Product {
   reviews         Review[]
   bundleItems     BundleItem[]
   flashSaleItems  FlashSaleItem[]
+  accessGrants    UserProductAccess[]
 
   @@index([category])
   @@index([isPublished])
@@ -285,4 +287,19 @@ model BannedIp {
   bannedAt  DateTime @default(now())
 
   @@index([ip])
+}
+
+model UserProductAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  grantedAt DateTime @default(now())
+  grantedBy String   @default("")
+  note      String   @default("")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
 }

@@ -6,12 +6,30 @@ export async function GET(req: NextRequest) {
   const { error, user } = requireAuth(req);
   if (error) return error;
 
-  const orders = await prisma.order.findMany({
-    where: { userId: user!.id },
-    include: { items: { include: { product: true } } },
-    orderBy: { createdAt: 'desc' },
+  const [orders, grantedAccess] = await Promise.all([
+    prisma.order.findMany({
+      where: { userId: user!.id },
+      include: { items: { include: { product: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.userProductAccess.findMany({
+      where: { userId: user!.id },
+      include: { product: { select: { id: true, title: true, imageUrl: true, category: true, price: true, fileUrl: true } } },
+    }),
+  ]);
+
+  return NextResponse.json({
+    orders,
+    grantedProducts: grantedAccess.map(a => ({
+      id: a.productId,
+      title: a.product.title,
+      imageUrl: a.product.imageUrl,
+      category: a.product.category,
+      price: a.product.price,
+      hasFile: !!a.product.fileUrl,
+      grantedAt: a.grantedAt,
+    })),
   });
-  return NextResponse.json(orders);
 }
 
 export async function POST(req: NextRequest) {

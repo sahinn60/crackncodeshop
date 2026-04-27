@@ -6,46 +6,54 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token');
   if (!token) return NextResponse.json({ error: 'Download token required' }, { status: 400 });
 
-  // 1. Validate token exists
   const dl = await prisma.downloadToken.findUnique({
     where: { token },
     include: {
       product: { select: { id: true, title: true, fileUrl: true, downloadLimit: true } },
-      orderItem: { include: { order: { select: { status: true } } } },
     },
   });
 
   if (!dl) return NextResponse.json({ error: 'Invalid download link' }, { status: 404 });
 
-  // 2. Check user auth matches token owner
+  // Check user auth
   const user = getAuthUser(req);
   if (!user || user.id !== dl.userId)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // 3. Check order is completed
-  if (dl.orderItem.order.status !== 'COMPLETED')
-    return NextResponse.json({ error: 'Order not completed' }, { status: 403 });
-
-  // 4. Check expiry
+  // Check expiry
   if (new Date() > dl.expiresAt)
     return NextResponse.json({ error: 'Download link expired. Request a new one from your dashboard.' }, { status: 410 });
 
-  // 5. Check download limit
+  // Check download limit
   if (dl.usedCount >= dl.maxUses)
-    return NextResponse.json({ error: `Download limit reached (${dl.maxUses} downloads). Contact support.` }, { status: 429 });
+    return NextResponse.json({ error: `Download limit reached (${dl.maxUses} downloads).` }, { status: 429 });
 
-  // 6. Check file URL exists
+  // Check access — either via order or admin grant
+  if (dl.orderItemId) {
+    const orderItem = await prisma.orderItem.findUnique({
+      where: { id: dl.orderItemId },
+      include: { order: { select: { status: true } } },
+    });
+    if (orderItem && orderItem.order.status !== 'COMPLETED')
+      return NextResponse.json({ error: 'Order not completed' }, { status: 403 });
+  } else {
+    // Admin-granted access — verify it still exists
+    const access = await prisma.userProductAccess.findUnique({
+      where: { userId_productId: { userId: dl.userId, productId: dl.productId } },
+    });
+    if (!access) return NextResponse.json({ error: 'Access revoked' }, { status: 403 });
+  }
+
+  // Check file URL
   if (!dl.product.fileUrl)
-    return NextResponse.json({ error: 'File not available. Contact support.' }, { status: 404 });
+    return NextResponse.json({ error: 'File not available.' }, { status: 404 });
 
-  // 7. Increment download count on both token and order item
-  await prisma.$transaction([
-    prisma.downloadToken.update({ where: { id: dl.id }, data: { usedCount: { increment: 1 } } }),
-    prisma.orderItem.update({ where: { id: dl.orderItem.id }, data: { downloadCount: { increment: 1 } } }),
-  ]);
+  // Increment download count
+  await prisma.downloadToken.update({ where: { id: dl.id }, data: { usedCount: { increment: 1 } } });
+  if (dl.orderItemId) {
+    await prisma.orderItem.update({ where: { id: dl.orderItemId }, data: { downloadCount: { increment: 1 } } }).catch(() => {});
+  }
 
-  // 8. Redirect to file URL (Cloudinary/S3 signed URL or direct)
-  // Add cache-busting to prevent browser caching the redirect
   const fileUrl = dl.product.fileUrl.includes('?')
     ? `${dl.product.fileUrl}&dl=${Date.now()}`
     : `${dl.product.fileUrl}?dl=${Date.now()}`;
