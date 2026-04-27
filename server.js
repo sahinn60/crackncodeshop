@@ -21,10 +21,17 @@ app.prepare()
         handle(req, res, parsedUrl);
       } catch (err) {
         console.error('[Server] Request error:', err);
-        res.statusCode = 500;
-        res.end('Internal Server Error');
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end('Internal Server Error');
+        }
       }
     });
+
+    // Timeouts
+    server.timeout = 30000;
+    server.keepAliveTimeout = 65000;
+    server.headersTimeout = 66000;
 
     server.listen(port, hostname, () => {
       console.log(`[Server] Ready on http://${hostname}:${port}`);
@@ -34,13 +41,21 @@ app.prepare()
       console.error('[Server] Server error:', err);
       process.exit(1);
     });
+
+    // Graceful shutdown
+    const shutdown = () => {
+      console.log('[Server] Shutting down...');
+      server.close(() => process.exit(0));
+      setTimeout(() => process.exit(1), 5000);
+    };
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   })
   .catch((err) => {
     console.error('[Server] Failed to start:', err);
     process.exit(1);
   });
 
-// Prevent crashes from unhandled errors
 process.on('uncaughtException', (err) => {
   console.error('[Server] Uncaught exception:', err);
 });
