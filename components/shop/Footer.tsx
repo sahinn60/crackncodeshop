@@ -102,7 +102,7 @@ export function Footer() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-slate-400">Garidaha Khanchanpur, Bogura</span>
+                  <span className="text-sm text-slate-400">Garidaha Kanchanpur, Bogura</span>
                 </li>
               </ul>
             </div>
