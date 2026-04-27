@@ -60,7 +60,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Sync cookie on hydration so middleware stays in sync with zustand
   useEffect(() => {
     if (!hydrated) return;
-    if (isAuthenticated && user?.token) {
+    if (isAuthenticated) {
       document.cookie = `auth-token=${localStorage.getItem('auth-token')}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
     }
   }, [hydrated, isAuthenticated]);

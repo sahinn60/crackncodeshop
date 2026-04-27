@@ -11,7 +11,7 @@ import {
   LogOut, ChevronRight, Clock, TrendingUp,
 } from 'lucide-react';
 import { apiClient } from '@/lib/axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Suspense } from 'react';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { Price } from '@/components/ui/Price';
 
@@ -137,7 +137,9 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
-export default function DashboardPage() {
+import { motion, AnimatePresence } from 'framer-motion';
+
+function DashboardContent() {
   const { isAuthenticated, user, updateProfile, logout } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -470,4 +472,8 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+export default function DashboardPage() {
+  return <Suspense><DashboardContent /></Suspense>;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +10,7 @@ import { CheckCircle, ShieldCheck, Zap, Loader2 } from 'lucide-react';
 import { apiClient } from '@/lib/axios';
 import { PostPurchaseOffer } from '@/components/shop/UpsellBlock';
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const { clearCart } = useCartStore();
 
@@ -103,11 +103,11 @@ export default function CheckoutSuccessPage() {
           </Button>
         </div>
       </motion.div>
-
-      {/* Post-Purchase Upsell */}
-      {purchasedIds.length > 0 && (
-        <PostPurchaseOffer purchasedProductIds={purchasedIds} />
-      )}
+      {purchasedIds.length > 0 && <PostPurchaseOffer purchasedProductIds={purchasedIds} />}
     </div>
   );
+}
+
+export default function CheckoutSuccessPage() {
+  return <Suspense fallback={<div className="min-h-[70vh] flex items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><SuccessContent /></Suspense>;
 }

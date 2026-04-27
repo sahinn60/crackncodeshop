@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { XCircle } from 'lucide-react';
 
-export default function CheckoutFailPage() {
+function FailContent() {
   const searchParams = useSearchParams();
   const reason = searchParams.get('reason');
 
@@ -45,4 +45,8 @@ export default function CheckoutFailPage() {
       </motion.div>
     </div>
   );
+}
+
+export default function CheckoutFailPage() {
+  return <Suspense><FailContent /></Suspense>;
 }

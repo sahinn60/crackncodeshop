@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -9,7 +9,7 @@ import { Eye, EyeOff, LogIn, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { validateLogin } from '@/lib/validate';
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -161,4 +161,8 @@ export default function LoginPage() {
       </motion.div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return <Suspense><LoginContent /></Suspense>;
 }

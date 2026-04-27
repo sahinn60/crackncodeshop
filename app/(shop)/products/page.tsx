@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProductCard, Product } from '@/components/shop/ProductCard';
 import { BundleCard, Bundle } from '@/components/shop/BundleCard';
@@ -16,7 +16,7 @@ const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 
 
 interface Category { id: string; name: string; slug: string; children: Category[] }
 
-export default function ProductsPage() {
+function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [bundles, setBundles] = useState<Bundle[]>([]);
   const [total, setTotal] = useState(0);
@@ -233,4 +233,8 @@ export default function ProductsPage() {
       </section>
     </div>
   );
+}
+
+export default function ProductsPage() {
+  return <Suspense><ProductsContent /></Suspense>;
 }
