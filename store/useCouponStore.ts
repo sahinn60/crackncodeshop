@@ -7,6 +7,7 @@ export interface Coupon {
   discount: string;
   message: string;
   priority: number;
+  endDate: string | null;
 }
 
 interface CouponState {
@@ -28,9 +29,7 @@ export const useCouponStore = create<CouponState>((set, get) => ({
       if (!res.ok) return;
       const data = await res.json();
       set({ coupons: Array.isArray(data) ? data : [], fetched: true });
-    } catch {
-      // Retry on next mount
-    }
+    } catch {}
   },
   setBarVisible: (v) => set({ barVisible: v }),
 }));

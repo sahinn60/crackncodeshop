@@ -20,7 +20,10 @@ export function PromoBanner() {
 
   useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
 
-  const slideCount = coupons.length === 1 ? 3 : coupons.length;
+  // Filter out expired coupons
+  const activeCoupons = coupons.filter(c => !c.endDate || new Date(c.endDate).getTime() > Date.now());
+
+  const slideCount = activeCoupons.length === 1 ? 3 : activeCoupons.length;
 
   const advance = useCallback(() => {
     setDirection(1);
@@ -50,10 +53,10 @@ export function PromoBanner() {
     setProgress(0);
   }, [slideCount]);
 
-  if (coupons.length === 0) return null;
+  if (activeCoupons.length === 0) return null;
 
   // With single coupon, loop it by duplicating so slider still animates
-  const slides = coupons.length === 1 ? [coupons[0], coupons[0], coupons[0]] : coupons;
+  const slides = activeCoupons.length === 1 ? [activeCoupons[0], activeCoupons[0], activeCoupons[0]] : activeCoupons;
   const coupon = slides[current % slides.length];
   const Icon = icons[current % icons.length];
 
@@ -154,13 +157,13 @@ export function PromoBanner() {
 
             {/* Progress bar */}
             <div className="flex items-center gap-3 mt-3">
-              {coupons.length > 1 && (
+              {activeCoupons.length > 1 && (
                 <div className="flex gap-1.5">
-                  {coupons.map((_, i) => (
+                  {activeCoupons.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => { setDirection(i > current ? 1 : -1); setCurrent(i); setProgress(0); }}
-                      className={`h-1 rounded-full transition-all duration-300 ${i === current % coupons.length ? 'w-5 bg-red-400' : 'w-1.5 bg-white/15 hover:bg-white/30'}`}
+                      className={`h-1 rounded-full transition-all duration-300 ${i === current % activeCoupons.length ? 'w-5 bg-red-400' : 'w-1.5 bg-white/15 hover:bg-white/30'}`}
                     />
                   ))}
                 </div>

@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { X } from 'lucide-react';
-import { useCouponStore } from '@/store/useCouponStore';
+import { useCouponStore, Coupon } from '@/store/useCouponStore';
 
-interface Coupon {
-  id: string;
-  code: string;
-  discount: string;
-  message: string;
+function isExpired(c: Coupon): boolean {
+  if (!c.endDate) return false;
+  return new Date(c.endDate).getTime() <= Date.now();
 }
 
 export function AnnouncementBar() {
@@ -16,23 +14,53 @@ export function AnnouncementBar() {
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
   const setBarVisible = useCouponStore(s => s.setBarVisible);
+  const fetchRef = useRef(0);
 
-  useEffect(() => {
-    fetch('/api/coupons')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        const arr = Array.isArray(data) ? data : [];
-        setCoupons(arr);
-        useCouponStore.setState({ coupons: arr, fetched: true });
-        if (arr.length > 0) setVisible(true);
-      })
-      .catch(() => {});
+  const fetchCoupons = useCallback(async () => {
+    try {
+      const res = await fetch('/api/coupons');
+      if (!res.ok) return;
+      const data = await res.json();
+      const arr: Coupon[] = Array.isArray(data) ? data : [];
+      const active = arr.filter(c => !isExpired(c));
+      setCoupons(active);
+      useCouponStore.setState({ coupons: active, fetched: true });
+      if (active.length > 0) setVisible(true);
+      else { setClosing(true); setTimeout(() => { setVisible(false); setClosing(false); }, 400); }
+    } catch {}
   }, []);
 
+  // Initial fetch
+  useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
+
+  // Check expiry every 30 seconds — remove expired coupons client-side
   useEffect(() => {
-    setBarVisible(visible && !closing);
+    const timer = setInterval(() => {
+      setCoupons(prev => {
+        const active = prev.filter(c => !isExpired(c));
+        if (active.length < prev.length) {
+          useCouponStore.setState({ coupons: active });
+          if (active.length === 0) {
+            setClosing(true);
+            setTimeout(() => { setVisible(false); setClosing(false); }, 400);
+          }
+        }
+        return active;
+      });
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Re-fetch from API every 5 minutes for fresh data
+  useEffect(() => {
+    const timer = setInterval(fetchCoupons, 5 * 60_000);
+    return () => clearInterval(timer);
+  }, [fetchCoupons]);
+
+  useEffect(() => {
+    setBarVisible(visible && !closing && coupons.length > 0);
     return () => setBarVisible(false);
-  }, [visible, closing, setBarVisible]);
+  }, [visible, closing, coupons.length, setBarVisible]);
 
   const handleClose = useCallback(() => {
     setClosing(true);
