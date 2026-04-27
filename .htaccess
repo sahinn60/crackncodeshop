@@ -1,0 +1,4 @@
+PassengerAppType node
+PassengerStartupFile server.js
+PassengerAppRoot /home/u123456789/domains/crackncode.shop/public_html
+PassengerNodejs /usr/bin/node

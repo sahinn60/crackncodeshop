@@ -7,6 +7,7 @@
     "build": "prisma generate && NODE_OPTIONS='--max-old-space-size=1536' next build --webpack",
     "postinstall": "prisma generate",
     "start": "NODE_ENV=production node server.js",
+    "start:passenger": "NODE_ENV=production node app.js",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev --name init",
     "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
