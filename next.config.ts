@@ -5,15 +5,21 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@prisma/client', 'bcryptjs', 'jsonwebtoken', 'pg'],
 
+  // Silence Turbopack warning
+  turbopack: {},
+
+  // Reduce memory usage for production builds
+  productionBrowserSourceMaps: false,
+
   webpack(config, { dev, isServer }) {
     config.cache = {
       type: 'filesystem',
-      allowCollectingMemory: true,
+      allowCollectingMemory: false,
     };
     config.parallelism = 1;
 
-    if (dev) {
-      config.devtool = 'eval-cheap-module-source-map';
+    if (!dev) {
+      config.devtool = false;
     }
 
     return config;

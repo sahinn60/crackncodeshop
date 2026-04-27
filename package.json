@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next dev --webpack",
-    "build": "prisma generate && cross-env NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "build": "prisma generate && NODE_OPTIONS='--max-old-space-size=1536' next build --webpack",
     "postinstall": "prisma generate",
-    "start": "cross-env NODE_OPTIONS='--max-old-space-size=4096' next start",
+    "start": "next start -p $PORT",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev --name init",
     "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
@@ -14,6 +14,9 @@
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
