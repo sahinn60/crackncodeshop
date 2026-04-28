@@ -285,25 +285,39 @@ export default function HomePage() {
       {/* Promo Coupon Banner */}
       <PromoBanner />
 
-      {/* Trusted By Section (Marquee) */}
-      <section className="py-6 sm:py-10 border-y border-gray-200 bg-dark overflow-hidden my-4 sm:my-8">
-        <div className="container mx-auto px-4 mb-5 sm:mb-8">
-          <p className="text-center text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-widest">Trusted by innovative teams worldwide</p>
+      {/* Trusted By — Double Strip Marquee */}
+      <section className="py-8 sm:py-12 bg-dark overflow-hidden my-4 sm:my-8">
+        <div className="container mx-auto px-4 mb-6 sm:mb-8">
+          <p className="text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-widest">Trusted by innovative teams worldwide</p>
         </div>
-        <div className="relative w-full flex overflow-hidden group">
-          <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-dark to-transparent z-10 pointer-events-none"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-dark to-transparent z-10 pointer-events-none"></div>
-          <div className="flex animate-marquee whitespace-nowrap items-center justify-around w-[200%]">
-            {[...Array(2)].map((_, idx) => (
-              <div key={idx} className="flex gap-10 sm:gap-20 px-5 sm:px-10 items-center min-w-full justify-around">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" className="h-5 sm:h-8 w-auto object-contain brightness-0 invert" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" alt="IBM" className="h-5 sm:h-8 w-auto object-contain brightness-0 invert" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" className="h-5 sm:h-8 w-auto object-contain brightness-0 invert" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" alt="Netflix" className="h-4 sm:h-6 w-auto object-contain brightness-0 invert" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Apple_logo_black.svg" alt="Apple" className="h-5 sm:h-8 w-auto object-contain brightness-0 invert" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" className="h-5 sm:h-8 w-auto object-contain brightness-0 invert" />
-              </div>
-            ))}
+        <div className="space-y-4">
+          {/* Strip 1 — left to right */}
+          <div className="relative flex overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-dark to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-dark to-transparent z-10 pointer-events-none" />
+            <div className="flex animate-marquee whitespace-nowrap items-center w-[200%]">
+              {[...Array(2)].map((_, idx) => (
+                <div key={idx} className="flex gap-6 sm:gap-10 px-3 sm:px-5 items-center min-w-full justify-around">
+                  {['Next.js', 'React', 'Tailwind CSS', 'TypeScript', 'Prisma', 'PostgreSQL', 'Node.js', 'Stripe', 'Cloudinary', 'Vercel'].map(t => (
+                    <span key={t} className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/10 bg-white/[0.04] text-white/50 text-xs sm:text-sm font-medium whitespace-nowrap">{t}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Strip 2 — right to left (reverse) */}
+          <div className="relative flex overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-dark to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-dark to-transparent z-10 pointer-events-none" />
+            <div className="flex animate-marquee-reverse whitespace-nowrap items-center w-[200%]">
+              {[...Array(2)].map((_, idx) => (
+                <div key={idx} className="flex gap-6 sm:gap-10 px-3 sm:px-5 items-center min-w-full justify-around">
+                  {['bKash', 'Nagad', 'EPS', 'Figma', 'Framer', 'Zustand', 'Recharts', 'Lucide', 'Axios', 'JWT'].map(t => (
+                    <span key={t} className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/10 bg-white/[0.04] text-white/50 text-xs sm:text-sm font-medium whitespace-nowrap">{t}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
