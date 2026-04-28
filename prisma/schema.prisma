@@ -126,13 +126,16 @@ model Review {
   userId    String
   rating    Int      // 1-5
   comment   String
+  guestName String?  // for admin-imported reviews
+  status    String   @default("pending") // pending | approved | rejected
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([productId, userId])
   @@index([productId])
   @@index([userId])
+  @@index([status])
 }
 
 model Analytics {
@@ -238,6 +241,9 @@ model Settings {
   socialInstagram   String  @default("")
   maintenanceMode   Boolean @default(false)
   footerText        String  @default("")
+  footerLogoUrl     String  @default("")
+  footerDescription String  @default("")
+  logoShowcase      String  @default("{}")
 }
 
 model FlashSale {
@@ -278,6 +284,18 @@ model LandingPage {
 
   @@index([slug])
   @@index([isPublished])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
 }
 
 model BannedIp {

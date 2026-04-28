@@ -118,7 +118,7 @@ function HeroSection({ c, a, product }: { c: any; a: any; product: any }) {
             {c.headline}
           </h1>
           {c.subheadline && (
-            <p className="text-lg sm:text-xl text-gray-300 mb-8 font-light">{c.subheadline}</p>
+            <p className="text-lg sm:text-xl text-gray-300 mb-8 font-normal">{c.subheadline}</p>
           )}
           {c.buttonText && (
             <Button className="bg-primary text-white hover:bg-[#E62828] px-8 py-3 text-base font-bold rounded-full shadow-lg" asChild>
@@ -167,7 +167,7 @@ function FeaturesSection({ c, a }: { c: any; a: any }) {
             <motion.div key={i} {...anim('slide', 0.1 * i)} className="bg-white rounded-xl p-6 sm:p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-center">
               <div className="text-3xl sm:text-4xl mb-4">{item.icon}</div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
-              <p className="text-gray-500 text-sm font-light">{item.description}</p>
+              <p className="text-gray-500 text-sm font-normal">{item.description}</p>
             </motion.div>
           ))}
         </div>
@@ -194,7 +194,7 @@ function ReviewsSection({ c, a }: { c: any; a: any }) {
                   <Star key={j} className={`h-4 w-4 ${j < (item.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
                 ))}
               </div>
-              <p className="text-gray-600 text-sm italic mb-4 font-light">"{item.text}"</p>
+              <p className="text-gray-600 text-sm italic mb-4 font-normal">"{item.text}"</p>
               {item.name && <p className="text-sm font-semibold text-gray-900">{item.name}</p>}
             </motion.div>
           ))}
@@ -301,7 +301,7 @@ function FaqSection({ c, a }: { c: any; a: any }) {
                 <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform flex-shrink-0 ml-2 ${open === i ? 'rotate-180' : ''}`} />
               </button>
               {open === i && (
-                <div className="px-5 pb-4 text-gray-500 text-sm font-light">{item.answer}</div>
+                <div className="px-5 pb-4 text-gray-500 text-sm font-normal">{item.answer}</div>
               )}
             </motion.div>
           ))}
@@ -319,7 +319,7 @@ function CtaSection({ c, a }: { c: any; a: any }) {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
           <div className="relative max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-4xl font-bold text-white mb-4">{c.headline}</h2>
-            {c.subheadline && <p className="text-gray-300 text-lg mb-8 font-light">{c.subheadline}</p>}
+            {c.subheadline && <p className="text-gray-300 text-lg mb-8 font-normal">{c.subheadline}</p>}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               {c.buttonText && (
                 <Button className="bg-primary text-white hover:bg-[#E62828] px-8 py-3 font-bold rounded-full shadow-lg" asChild>

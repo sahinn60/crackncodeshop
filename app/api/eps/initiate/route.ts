@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       transactionTypeId: 1,
       financialEntityId: 0,
       transitionStatusId: 0,
-      totalAmount: total,
+      totalAmount: Math.round(total),
       successUrl: `${origin}/checkout/success?merchantTransactionId=${merchantTransactionId}`,
       failUrl: `${origin}/checkout/fail`,
       cancelUrl: `${origin}/checkout/fail`,

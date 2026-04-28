@@ -7,36 +7,29 @@ import { Mail, MapPin, Phone } from 'lucide-react';
 export function Footer() {
   const { settings } = useSettingsStore();
   const name = settings?.siteName || 'Crackncode';
+  const footerLogo = settings?.footerLogoUrl || settings?.logoUrl;
 
   return (
     <footer className="text-slate-300 bg-slate-900">
-      {/* Footer banner image — full width, all logos visible */}
+      {/* Footer banner image */}
       <div className="w-full">
-        <img
-          src="/Footer-Desktop-Dark-Version.png"
-          alt="Partners"
-          className="hidden md:block w-full h-auto object-contain"
-        />
-        <img
-          src="/Footer-Mobile-Dark-Version.png"
-          alt="Partners"
-          className="block md:hidden w-full h-auto object-contain"
-        />
+        <img src="/Footer-Desktop-Dark-Version.png" alt="Partners" className="hidden md:block w-full h-auto object-contain" />
+        <img src="/Footer-Mobile-Dark-Version.png" alt="Partners" className="block md:hidden w-full h-auto object-contain" />
       </div>
 
       {/* Content */}
       <div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-8">
+        <div className="container mx-auto px-3 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-8">
           {/* Top grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <Link href="/" className="inline-block mb-5">
-                {settings?.logoUrl ? (
+              <Link href="/" className="inline-block mb-0.5 transition-transform duration-200 hover:scale-105">
+                {footerLogo ? (
                   <img
-                    src={settings.logoUrl}
+                    src={footerLogo}
                     alt={name}
-                    className="h-9 w-auto max-w-[180px] object-contain brightness-0 invert"
+                    className="h-[128px] sm:h-[168px] w-auto max-w-[560px] object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]"
                   />
                 ) : (
                   <span className="text-2xl font-black tracking-tight text-white">
@@ -44,9 +37,13 @@ export function Footer() {
                   </span>
                 )}
               </Link>
-              <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-                Your premium destination for high-quality digital products, templates, and creative assets.
-              </p>
+              {settings?.footerDescription && (
+                <p
+                  className="text-[13.5px] sm:text-[15.5px] font-semibold text-slate-300 leading-snug mt-0 max-w-[420px] footer-desc-glow"
+                >
+                  {settings.footerDescription}
+                </p>
+              )}
               {/* Social icons */}
               <div className="flex gap-3 mt-5">
                 {settings?.socialLinks?.facebook && (
@@ -74,7 +71,7 @@ export function Footer() {
                 <li><Link href="/" className="text-sm text-slate-400 hover:text-white transition-colors">Home</Link></li>
                 <li><Link href="/products" className="text-sm text-slate-400 hover:text-white transition-colors">Products</Link></li>
                 <li><Link href="/about" className="text-sm text-slate-400 hover:text-white transition-colors">About Us</Link></li>
-                <li><Link href="/pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</Link></li>
+
               </ul>
             </div>
 

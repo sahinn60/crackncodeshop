@@ -26,5 +26,10 @@ export async function POST(req: NextRequest) {
     data: { userId: stored.user.id, token: newRefreshToken, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
   });
 
-  return NextResponse.json({ accessToken, refreshToken: newRefreshToken });
+  const u = stored.user;
+  return NextResponse.json({
+    accessToken,
+    refreshToken: newRefreshToken,
+    user: { id: u.id, name: u.name, email: u.email, role: u.role, avatarUrl: u.avatarUrl, bio: u.bio, permissions },
+  });
 }

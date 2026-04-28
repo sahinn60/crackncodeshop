@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ProductCard, Product } from '@/components/shop/ProductCard';
 import { BundleCard, Bundle } from '@/components/shop/BundleCard';
-import { Search, SlidersHorizontal, Mail, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { Search, Mail, ChevronLeft, ChevronRight, Package, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { CategorySidebar } from '@/components/shop/CategorySidebar';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import { apiClient } from '@/lib/axios';
@@ -27,6 +28,9 @@ function ProductsContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
+  const [maxPrice, setMaxPrice] = useState(0);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -61,9 +65,18 @@ function ProductsContent() {
         setTotalPages(1);
       } else {
         const { data } = await apiClient.get('/products', {
-          params: { search: searchQuery, category: selectedCategory, page: currentPage, limit: ITEMS_PER_PAGE },
+          params: { search: searchQuery, category: selectedCategory, page: currentPage, limit: ITEMS_PER_PAGE, sort: sortBy || undefined },
         });
-        setProducts(data.products);
+        let filtered = data.products;
+        if (priceRange[1] > 0) {
+          filtered = filtered.filter((p: Product) => p.price >= priceRange[0] && p.price <= priceRange[1]);
+        }
+        if (!maxPrice && data.products.length) {
+          const mp = Math.ceil(Math.max(...data.products.map((p: Product) => p.price)));
+          setMaxPrice(mp);
+          setPriceRange([0, mp]);
+        }
+        setProducts(filtered);
         setBundles([]);
         setTotal(data.total);
         setTotalPages(data.pages);
@@ -73,7 +86,7 @@ function ProductsContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategory, currentPage, isBundleMode]);
+  }, [searchQuery, selectedCategory, currentPage, isBundleMode, sortBy, priceRange]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -91,6 +104,7 @@ function ProductsContent() {
     setIsBundleMode(false);
     setSelectedCategory(cat);
     setCurrentPage(1);
+    setSortBy('');
   };
 
   const handleBundleMode = () => {
@@ -103,12 +117,12 @@ function ProductsContent() {
   const hasResults = isBundleMode ? bundles.length > 0 : products.length > 0;
 
   return (
-    <div className="flex flex-col min-h-screen bg-light text-dark font-light">
+    <div className="flex flex-col min-h-screen bg-light text-dark">
       <div className="container mx-auto px-4 py-6 sm:py-12 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
           <div>
             <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-dark">{isBundleMode ? '📦 Bundle Offers' : 'All Products'}</h1>
-            <p className="mt-1.5 sm:mt-2 text-base sm:text-lg text-gray-500 font-light">{isBundleMode ? 'Save more with our curated product bundles.' : 'Find the perfect digital asset for your next big project.'}</p>
+            <p className="mt-1.5 sm:mt-2 text-base sm:text-lg text-gray-600">{isBundleMode ? 'Save more with our curated product bundles.' : 'Browse tools that help you work smarter, not harder.'}</p>
           </div>
         </motion.div>
 
@@ -124,35 +138,57 @@ function ProductsContent() {
               </div>
             </div>
 
-            <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
-              <h3 className="text-xs sm:text-sm font-semibold text-dark flex items-center gap-2 mb-3 sm:mb-4 uppercase tracking-wider">
-                <SlidersHorizontal className="h-4 w-4" /> Categories
-              </h3>
-              <div className="flex flex-wrap lg:flex-col gap-1">
-                <button onClick={() => handleCategory('All')} className={`text-left px-3 py-2 sm:py-2.5 rounded-lg text-sm transition-colors font-medium ${!isBundleMode && selectedCategory === 'All' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-50 hover:text-dark'}`}>
-                  All
-                </button>
-                <button onClick={handleBundleMode} className={`text-left px-3 py-2 sm:py-2.5 rounded-lg text-sm transition-colors font-medium flex items-center gap-1.5 ${isBundleMode ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-50 hover:text-dark'}`}>
-                  <Package className="h-3.5 w-3.5" /> Bundle Offers
-                </button>
-                {categories.map(cat => (
-                  <div key={cat.id}>
-                    <button onClick={() => handleCategory(cat.name)} className={`text-left px-3 py-2 sm:py-2.5 rounded-lg text-sm transition-colors font-medium w-full ${!isBundleMode && selectedCategory === cat.name ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-50 hover:text-dark'}`}>
-                      {cat.name}
-                    </button>
-                    {cat.children.map(sub => (
-                      <button key={sub.id} onClick={() => handleCategory(sub.name)} className={`text-left px-3 py-1.5 pl-6 rounded-lg text-xs transition-colors w-full ${!isBundleMode && selectedCategory === sub.name ? 'bg-primary/10 text-primary font-medium' : 'text-gray-500 hover:bg-gray-50 hover:text-dark'}`}>
-                        {sub.name}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <CategorySidebar
+              categories={categories}
+              selectedCategory={selectedCategory}
+              isBundleMode={isBundleMode}
+              onSelectCategory={handleCategory}
+              onSelectBundle={handleBundleMode}
+            />
           </motion.div>
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col">
+            {/* Filter Bar */}
+            {!isBundleMode && (
+              <div className="flex flex-wrap items-center gap-3 mb-4 sm:mb-6 bg-white border border-gray-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <SlidersHorizontal className="h-3.5 w-3.5" /> Filter:
+                </div>
+                <select
+                  value={sortBy}
+                  onChange={e => { setSortBy(e.target.value); setCurrentPage(1); }}
+                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">Newest First</option>
+                  <option value="price-asc">Price: Low → High</option>
+                  <option value="price-desc">Price: High → Low</option>
+                  <option value="rating">Top Rated</option>
+                </select>
+                {maxPrice > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Price:</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxPrice}
+                      value={priceRange[1]}
+                      onChange={e => setPriceRange([0, Number(e.target.value)])}
+                      className="w-20 sm:w-28 h-1.5 accent-primary cursor-pointer"
+                    />
+                    <span className="text-xs font-medium text-gray-700 tabular-nums">৳{priceRange[1]}</span>
+                  </div>
+                )}
+                {(sortBy || (maxPrice > 0 && priceRange[1] < maxPrice)) && (
+                  <button
+                    onClick={() => { setSortBy(''); if (maxPrice) setPriceRange([0, maxPrice]); setCurrentPage(1); }}
+                    className="text-xs text-primary hover:underline font-medium ml-auto"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            )}
             {isLoading ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
                 {Array(4).fill(0).map((_, i) => (
@@ -223,7 +259,7 @@ function ProductsContent() {
               <Mail className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark lg:text-4xl">Subscribe to our newsletter</h2>
-            <p className="mt-4 text-lg text-gray-500 font-light">Get weekly updates on new resources, templates, and special offers.</p>
+            <p className="mt-4 text-lg text-gray-600">Get weekly updates on new resources, templates, and special offers.</p>
             <form className="mt-6 sm:mt-8 flex flex-col sm:flex-row max-w-md mx-auto gap-3 sm:gap-x-4">
               <input name="email" type="email" required className="min-w-0 flex-auto rounded-lg border-0 px-3.5 py-2 text-dark shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 bg-white" placeholder="Enter your email" />
               <Button type="submit" className="flex-none bg-primary hover:bg-[#E62828] text-white">Subscribe</Button>

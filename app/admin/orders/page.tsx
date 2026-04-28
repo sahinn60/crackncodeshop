@@ -166,7 +166,7 @@ export default function AdminOrdersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-medium text-gray-900">Orders <span className="text-gray-400 font-light text-base">({filtered.length})</span></h1>
+          <h1 className="text-xl font-medium text-gray-900">Orders <span className="text-gray-400 font-normal text-base">({filtered.length})</span></h1>
           <p className="text-xs text-gray-400 mt-0.5">Total: <span className="font-medium text-gray-600"><Price amount={totalRevenue} /></span></p>
         </div>
         <div className="flex gap-3 flex-wrap">

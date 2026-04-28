@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiClient } from '@/lib/axios';
+import { apiClient, setOnTokenRefreshed } from '@/lib/axios';
 
 export interface User {
   id: string; name: string; email: string;
@@ -101,3 +101,8 @@ export const useAuthStore = create<AuthState>()(
     { name: 'auth-storage', partialize: (s) => ({ user: s.user, token: s.token, isAuthenticated: s.isAuthenticated }) }
   )
 );
+
+// Sync store when token refresh returns fresh user data
+setOnTokenRefreshed((user, token, refreshToken) => {
+  useAuthStore.getState().setAuth(user, token, refreshToken);
+});

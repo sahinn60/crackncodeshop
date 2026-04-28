@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { apiClient } from '@/lib/axios';
-import { Search, Trash2, ShieldCheck, ShieldOff, KeyRound, X, Check, Package, ShoppingBag } from 'lucide-react';
+import { Search, Trash2, KeyRound, X, Check, ShoppingBag } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Price } from '@/components/ui/Price';
 
-interface User { id: string; name: string; email: string; role: string; createdAt: string; _count: { orders: number } }
+interface User { id: string; name: string; email: string; role: string; createdAt: string; protected?: boolean; _count: { orders: number } }
 
 interface AccessProduct {
   id: string; title: string; imageUrl: string; category: string; price: number;
@@ -39,11 +39,6 @@ export default function AdminUsersPage() {
     return matchSearch && matchRole;
   }), [users, search, roleFilter]);
 
-  const toggleRole = async (u: User) => {
-    const newRole = u.role === 'ADMIN' ? 'USER' : 'ADMIN';
-    await apiClient.patch(`/admin/users/${u.id}`, { role: newRole });
-    setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: newRole } : x));
-  };
 
   const deleteUser = async (id: string) => {
     if (!confirm('Delete this user? This cannot be undone.')) return;
@@ -101,7 +96,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-xl font-medium text-gray-900">Users <span className="text-gray-400 font-light text-base">({filtered.length})</span></h1>
+        <h1 className="text-xl font-medium text-gray-900">Users <span className="text-gray-400 font-normal text-base">({filtered.length})</span></h1>
         <div className="flex gap-3 flex-wrap">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -158,16 +153,10 @@ export default function AdminUsersPage() {
                       >
                         <KeyRound className="h-3.5 w-3.5" /> Access
                       </button>
-                      {u.id !== currentUser?.id && (
-                        <>
-                          <button onClick={() => toggleRole(u)} title={u.role === 'ADMIN' ? 'Revoke Admin' : 'Make Admin'}
-                            className={`p-1.5 rounded-lg transition-colors ${u.role === 'ADMIN' ? 'text-indigo-500 hover:bg-indigo-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                            {u.role === 'ADMIN' ? <ShieldOff className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
-                          </button>
-                          <button onClick={() => deleteUser(u.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </>
+                      {u.id !== currentUser?.id && !u.protected && (
+                        <button onClick={() => deleteUser(u.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       )}
                     </div>
                   </td>

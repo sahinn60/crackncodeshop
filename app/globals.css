@@ -9,8 +9,10 @@
   
   --font-sans: var(--font-inter), var(--font-opensans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   
-  --animate-marquee: marquee 30s linear infinite;
-  --animate-marquee-reverse: marquee-reverse 30s linear infinite;
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee-reverse: marquee-reverse 40s linear infinite;
+  --animate-testimonial-scroll: testimonial-scroll 60s linear infinite;
+  --animate-testimonial-scroll-reverse: testimonial-scroll-reverse 60s linear infinite;
 }
 
 @keyframes marquee {
@@ -23,18 +25,40 @@
   100% { transform: translateX(0%); }
 }
 
+@keyframes testimonial-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes testimonial-scroll-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
 body {
   background-color: var(--color-light);
   color: var(--color-dark);
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.6;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* â”€â”€ Mobile full-width layout â”€â”€ */
+@media (max-width: 639px) {
+  .container {
+    max-width: 100% !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 500;
+  font-weight: 650;
   letter-spacing: -0.025em;
+  line-height: 1.35;
 }
 
 p, span, a, li, td, th, label, input, textarea, select, button {
@@ -54,9 +78,301 @@ p, span, a, li, td, th, label, input, textarea, select, button {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ═══════════════════════════════════════════
-   ANNOUNCEMENT BAR — Animated Banner
-   ═══════════════════════════════════════════ */
+@keyframes feature-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.feature-float {
+  animation: feature-float 4s ease-in-out infinite;
+}
+
+/* Hero title â€” flex layout for stable word spacing */
+.hero-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 0.3em;
+  font-size: 22px;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0 auto;
+  padding: 0 8px;
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .hero-title { font-size: 1.875rem; white-space: nowrap; flex-wrap: nowrap; }
+}
+@media (min-width: 1024px) {
+  .hero-title { font-size: 2.25rem; }
+}
+.hero-word-wrapper {
+  display: inline-block;
+  position: relative;
+  width: 3.6em;
+  height: 1.3em;
+  vertical-align: baseline;
+}
+.hero-word-slider {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to right, var(--color-primary), #f87171, #fb923c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+}
+.hero-side-text {
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hero-nudge-left  { transform: translateX(-5px); }
+.hero-nudge-right { transform: translateX(5px); }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   LOGO SHOWCASE â€” Multi-Animation System
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+
+/* â”€â”€ Card base â”€â”€ */
+.ls-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.2);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  cursor: default;
+}
+.ls-card:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(139,92,246,0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(139,92,246,0.1), 0 0 0 1px rgba(139,92,246,0.05);
+}
+
+/* â”€â”€ Title base (slightly larger) â”€â”€ */
+.ls-title {
+  font-size: clamp(13px, 1.5vw, 15px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.4;
+}
+
+/* â•â•â• 7 TITLE EFFECTS â•â•â• */
+
+/* 1. Slide Left */
+@keyframes lstSlideLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.lst-slide-left { opacity: 0; }
+.lst-slide-left.lst-visible { animation: lstSlideLeft 0.6s ease-out forwards; }
+
+/* 2. Fade Up */
+@keyframes lstFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lst-fade-up { opacity: 0; }
+.lst-fade-up.lst-visible { animation: lstFadeUp 0.6s ease-out forwards; }
+
+/* 3. Glow Text */
+@keyframes lstGlowText {
+  0%, 100% { text-shadow: 0 0 8px rgba(139,92,246,0.15), 0 0 20px rgba(255,255,255,0.06); }
+  50%      { text-shadow: 0 0 18px rgba(139,92,246,0.35), 0 0 40px rgba(255,255,255,0.1); }
+}
+.lst-glow-text.lst-visible {
+  text-shadow: 0 0 12px rgba(139,92,246,0.2), 0 0 24px rgba(255,255,255,0.06);
+  animation: lstGlowText 3s ease-in-out infinite;
+}
+
+/* 4. Gradient Shift */
+@keyframes lstGradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.lst-gradient-shift.lst-visible {
+  background: linear-gradient(90deg, #fff, #a78bfa, #818cf8, #c4b5fd, #fff);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: lstGradientShift 4s ease-in-out infinite;
+}
+
+/* 5. Blur Reveal */
+@keyframes lstBlurReveal {
+  from { opacity: 0; filter: blur(8px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+.lst-blur-reveal { opacity: 0; filter: blur(8px); }
+.lst-blur-reveal.lst-visible { animation: lstBlurReveal 0.8s ease-out forwards; }
+
+/* 6. Scale In */
+@keyframes lstScaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.lst-scale-in { opacity: 0; }
+.lst-scale-in.lst-visible { animation: lstScaleIn 0.5s ease-out forwards; }
+
+/* 7. Letter Stagger */
+@keyframes lstLetterIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lst-letter-stagger .lst-letter {
+  display: inline-block;
+  opacity: 0;
+}
+.lst-letter-stagger.lst-visible .lst-letter {
+  animation: lstLetterIn 0.3s ease-out forwards;
+}
+
+/* â•â•â• SCROLL TRACK (full-width) â•â•â• */
+.ls-scroll-wrap {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  overflow: hidden;
+}
+.ls-fade-left {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 48px; z-index: 2; pointer-events: none;
+  background: linear-gradient(to right, #070D1A, transparent);
+}
+.ls-fade-right {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 48px; z-index: 2; pointer-events: none;
+  background: linear-gradient(to left, #0D1225, transparent);
+}
+@media (min-width: 640px) {
+  .ls-fade-left, .ls-fade-right { width: 96px; }
+}
+
+@keyframes lsScrollForward {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ls-scroll-track {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: max-content;
+  min-width: 200%;
+  justify-content: flex-start;
+  will-change: transform;
+}
+@media (min-width: 640px) {
+  .ls-scroll-track { gap: 28px; }
+}
+.ls-scroll-forward { animation: lsScrollForward 25s linear infinite; }
+.ls-pause-hover:hover { animation-play-state: paused; }
+
+/* â•â•â• 7 LOGO CARD ANIMATIONS (composable) â•â•â• */
+
+/* 1. Scroll â€” handled by track, no card class needed */
+
+/* 2. Float */
+@keyframes lsaFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+.lsa-float { animation: lsaFloat 3.5s ease-in-out infinite; }
+
+/* 3. Scale */
+@keyframes lsaScale {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+.lsa-scale { animation: lsaScale 2.8s ease-in-out infinite; }
+
+/* 4. Glow */
+@keyframes lsaGlow {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 16px rgba(0,0,0,0.2); }
+  50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 24px 4px rgba(139,92,246,0.2), 0 0 48px 8px rgba(99,102,241,0.08); }
+}
+.lsa-glow { animation: lsaGlow 2.5s ease-in-out infinite; }
+
+/* 5. Fade */
+@keyframes lsaFade {
+  0%   { opacity: 0.3; }
+  30%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+.lsa-fade { animation: lsaFade 3s ease-in-out infinite; }
+
+/* 6. Blur */
+@keyframes lsaBlur {
+  0%, 100% { filter: blur(0); }
+  50%      { filter: blur(1.5px); }
+}
+.lsa-blur { animation: lsaBlur 4s ease-in-out infinite; }
+
+/* 7. Tilt */
+@keyframes lsaTilt {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-1.5deg); }
+  75%      { transform: rotate(1.5deg); }
+}
+.lsa-tilt { animation: lsaTilt 4s ease-in-out infinite; }
+
+/* Stagger delay for grid items */
+.lsa-item { animation-delay: inherit; }
+
+/* Compositing: when multiple animations are on the same card,
+   CSS applies the LAST matching animation. We use a layered approach:
+   float+scale â†’ combined keyframe via wrapper + card split.
+   For simplicity, each class targets a different property where possible:
+   - float/scale/tilt â†’ transform (last wins, but stagger makes it look combined)
+   - glow â†’ box-shadow
+   - fade â†’ opacity
+   - blur â†’ filter
+   Transform-based ones that conflict get a wrapper approach in the component. */
+
+/* Footer description glow pulse */
+@keyframes footerTextPulse {
+  0%   { opacity: 0.85; text-shadow: 0 0 6px rgba(239,68,68,0.2); }
+  50%  { opacity: 1;    text-shadow: 0 0 14px rgba(96,165,250,0.4); }
+  100% { opacity: 0.85; text-shadow: 0 0 6px rgba(239,68,68,0.2); }
+}
+.footer-desc-glow {
+  text-shadow: 0 0 6px rgba(239,68,68,0.3), 0 0 12px rgba(96,165,250,0.25);
+  animation: footerTextPulse 3s ease-in-out infinite;
+}
+
+
+/* Flash Sale effects */
+@keyframes fs-shine {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes fs-icon-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(255,45,45,0.2); }
+  50% { transform: scale(1.05); box-shadow: 0 8px 24px rgba(255,45,45,0.3); }
+}
+@keyframes fs-badge-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,80,80,0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 0 16px rgba(255,80,80,0.45); }
+}
+@keyframes fs-timer-breathe {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(255,255,255,0.05); }
+  50% { transform: scale(1.03); box-shadow: 0 0 12px rgba(255,255,255,0.08); }
+}
+@keyframes fs-num-pop {
+  0% { opacity: 0.7; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ANNOUNCEMENT BAR â€” Animated Banner
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 @keyframes ann-fadeIn {
   from { opacity: 0; }
@@ -198,3 +514,131 @@ p, span, a, li, td, th, label, input, textarea, select, button {
   .ann-bar__fade--right { right: 30px; }
   .ann-bar__close { right: 5px; width: 20px; height: 20px; }
 }
+
+/* â”€â”€ Legal Page â€” Premium A4 Card â”€â”€ */
+.legal-page {
+  min-height: 100vh;
+  background: #f4f5f7;
+  padding: 40px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-inter), var(--font-hind-siliguri), sans-serif;
+}
+.legal-page[data-lang="bn"] {
+  font-family: var(--font-hind-siliguri), var(--font-inter), sans-serif;
+}
+.legal-logo-wrap {
+  margin-bottom: 28px;
+  text-align: center;
+}
+.legal-logo {
+  height: 150px;
+  width: auto;
+  max-width: 320px;
+  object-fit: contain;
+}
+@media (min-width: 640px) {
+  .legal-logo { height: 170px; max-width: 380px; }
+  .legal-page { padding: 56px 24px 80px; }
+}
+.legal-card {
+  width: 100%;
+  max-width: 800px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+.legal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #FF2D2D 0%, #0D6EFD 100%);
+}
+@media (min-width: 640px) {
+  .legal-header { padding: 28px 36px; }
+}
+.legal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+@media (min-width: 640px) {
+  .legal-title { font-size: 28px; }
+}
+.legal-lang-btn {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  backdrop-filter: blur(4px);
+}
+.legal-lang-btn:hover {
+  background: rgba(255,255,255,0.3);
+  border-color: rgba(255,255,255,0.5);
+}
+.legal-body {
+  padding: 28px 28px 36px;
+}
+@media (min-width: 640px) {
+  .legal-body { padding: 36px 40px 48px; }
+}
+.legal-section {
+  margin-bottom: 28px;
+}
+.legal-section:last-child { margin-bottom: 0; }
+.legal-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.legal-section-content {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #444;
+}
+.legal-section-content p { margin-bottom: 10px; }
+.legal-section-content p:last-child { margin-bottom: 0; }
+.legal-section-content ul {
+  list-style: disc;
+  margin-left: 20px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+.legal-section-content ul ul { margin-top: 4px; }
+.legal-section-content li { margin-bottom: 4px; }
+.legal-section-content h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 14px 0 4px;
+}
+.legal-section-content a {
+  color: #0D6EFD;
+  text-decoration: none;
+}
+.legal-section-content a:hover { text-decoration: underline; }
+
+/* Bangla typography optimizations */
+.legal-page[data-lang="bn"] .legal-section-content {
+  line-height: 1.9;
+  letter-spacing: 0.01em;
+  font-weight: 400;
+}
+.legal-page[data-lang="bn"] .legal-section-content li {
+  margin-bottom: 6px;
+}
+

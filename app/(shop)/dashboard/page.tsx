@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import {
   Download, Package, User, Save, X, CheckCircle,
   ShoppingBag, CreditCard, CalendarDays, ExternalLink,
-  LogOut, ChevronRight, Clock, TrendingUp,
+  LogOut, ChevronRight, Clock, TrendingUp, Star, MessageSquare, Send, Edit3,
 } from 'lucide-react';
 import { apiClient } from '@/lib/axios';
 import { Suspense } from 'react';
@@ -18,7 +18,7 @@ import { Price } from '@/components/ui/Price';
 interface OrderItem { id: string; product: { id: string; title: string; imageUrl: string; category: string }; price: number; downloadCount: number }
 interface Order { id: string; total: number; status: string; createdAt: string; items: OrderItem[] }
 
-type Tab = 'library' | 'orders' | 'profile';
+type Tab = 'library' | 'orders' | 'reviews' | 'profile';
 
 const STATUS_STYLES: Record<string, string> = {
   COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -149,6 +149,12 @@ function DashboardContent() {
   const [activeTab, setActiveTab] = useState<Tab>('library');
   const [libDownloading, setLibDownloading] = useState<string | null>(null);
   const [libDlError, setLibDlError] = useState('');
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [editingReview, setEditingReview] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editComment, setEditComment] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
 
   // Profile form
   const [name, setName] = useState('');
@@ -161,6 +167,7 @@ function DashboardContent() {
   useEffect(() => {
     if (searchParams.get('tab') === 'profile') setActiveTab('profile');
     if (searchParams.get('tab') === 'orders') setActiveTab('orders');
+    if (searchParams.get('tab') === 'reviews') setActiveTab('reviews');
   }, [searchParams]);
 
   useEffect(() => {
@@ -170,6 +177,13 @@ function DashboardContent() {
       setGrantedProducts(data.grantedProducts || []);
     }).finally(() => setIsLoading(false));
   }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    if (activeTab === 'reviews' && myReviews.length === 0 && isAuthenticated) {
+      setReviewsLoading(true);
+      apiClient.get('/user/reviews').then(({ data }) => setMyReviews(data)).finally(() => setReviewsLoading(false));
+    }
+  }, [activeTab, isAuthenticated, myReviews.length]);
 
   useEffect(() => {
     if (user) { setName(user.name || ''); setBio(user.bio || ''); setAvatarUrl(user.avatarUrl || ''); }
@@ -207,6 +221,7 @@ function DashboardContent() {
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: 'library', label: 'My Library', icon: Package },
     { key: 'orders', label: 'Orders', icon: ShoppingBag },
+    { key: 'reviews', label: 'Reviews', icon: MessageSquare },
     { key: 'profile', label: 'Profile', icon: User },
   ];
 
@@ -361,6 +376,96 @@ function DashboardContent() {
               ) : (
                 <div className="space-y-3">
                   {orders.map(order => <OrderCard key={order.id} order={order} />)}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Reviews Tab */}
+          {activeTab === 'reviews' && (
+            <motion.div key="reviews" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              {reviewsLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="h-8 w-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : myReviews.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+                  <MessageSquare className="h-12 w-12 text-gray-200 mx-auto mb-4" />
+                  <p className="text-lg font-semibold text-dark">No reviews yet</p>
+                  <p className="text-sm text-gray-400 mt-1">Purchase a product and share your experience</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {myReviews.map(r => {
+                    const statusStyle = r.status === 'approved' ? 'bg-green-50 text-green-700 border-green-200'
+                      : r.status === 'rejected' ? 'bg-red-50 text-red-600 border-red-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200';
+                    const statusLabel = r.status === 'approved' ? 'Published' : r.status === 'rejected' ? 'Needs changes' : 'Under Review';
+                    const canEdit = r.status === 'pending' || r.status === 'rejected';
+                    const isEditing = editingReview === r.id;
+
+                    return (
+                      <div key={r.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:border-gray-200 transition-colors">
+                        <div className="flex items-start gap-4">
+                          <img src={r.product.imageUrl} alt="" className="h-14 w-14 rounded-xl object-cover bg-gray-100 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <Link href={`/products/${r.product.id}`} className="text-sm font-semibold text-dark hover:text-primary transition-colors">
+                                  {r.product.title}
+                                </Link>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <div className="flex gap-0.5">
+                                    {[1,2,3,4,5].map(i => <Star key={i} className={`h-3.5 w-3.5 ${i <= (isEditing ? editRating : r.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200'} ${isEditing ? 'cursor-pointer' : ''}`} onClick={() => isEditing && setEditRating(i)} />)}
+                                  </div>
+                                  <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border ${statusStyle}`}>
+                                    {statusLabel}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] text-gray-400 flex-shrink-0">
+                                {new Date(r.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
+
+                            {isEditing ? (
+                              <div className="mt-3">
+                                <textarea value={editComment} onChange={e => setEditComment(e.target.value)} rows={2}
+                                  className="block w-full rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white text-dark outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
+                                <div className="flex gap-2 mt-2">
+                                  <Button size="sm" disabled={editSaving || !editRating || !editComment.trim()}
+                                    onClick={async () => {
+                                      setEditSaving(true);
+                                      try {
+                                        const { data } = await apiClient.put(`/products/${r.productId}/reviews`, { rating: editRating, comment: editComment });
+                                        setMyReviews(prev => prev.map(rv => rv.id === r.id ? { ...rv, ...data.review } : rv));
+                                        setEditingReview(null);
+                                      } catch {} finally { setEditSaving(false); }
+                                    }}
+                                    className="h-8 text-xs gap-1 bg-primary hover:bg-[#E62828] text-white font-semibold">
+                                    <Send className="h-3 w-3" /> {editSaving ? '...' : 'Resubmit'}
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => setEditingReview(null)} className="h-8 text-xs">
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-2 flex items-start justify-between gap-2">
+                                <p className="text-sm text-gray-600 leading-relaxed">{r.comment}</p>
+                                {canEdit && (
+                                  <button onClick={() => { setEditingReview(r.id); setEditRating(r.rating); setEditComment(r.comment); }}
+                                    className="flex items-center gap-1 text-xs text-primary hover:underline flex-shrink-0 mt-0.5">
+                                    <Edit3 className="h-3 w-3" /> Edit
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </motion.div>

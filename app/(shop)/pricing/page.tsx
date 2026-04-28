@@ -88,7 +88,7 @@ const faqs = [
 ];
 
 export default function PricingPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [annual, setAnnual] = useState(false);
 
   return (
@@ -104,7 +104,7 @@ export default function PricingPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Simple, transparent <span className="text-primary">pricing</span>
             </h1>
-            <p className="text-gray-400 max-w-xl mx-auto text-base sm:text-lg font-light">
+            <p className="text-gray-400 max-w-xl mx-auto text-base sm:text-lg font-normal">
               Choose the plan that fits your needs. No hidden fees, cancel anytime.
             </p>
           </motion.div>
@@ -153,7 +153,7 @@ export default function PricingPage() {
                   <h3 className="text-lg font-bold">{plan.name}</h3>
                 </div>
 
-                <p className={`text-sm mb-6 ${isPro ? 'text-gray-400' : 'text-gray-500'} font-light`}>{plan.description}</p>
+                <p className={`text-sm mb-6 ${isPro ? 'text-gray-400' : 'text-gray-500'} font-normal`}>{plan.description}</p>
 
                 <div className="mb-6">
                   <span className="text-4xl font-black">{displayPrice === 0 ? 'Free' : <Price amount={displayPrice} />}</span>
@@ -201,7 +201,7 @@ export default function PricingPage() {
                   <ChevronDown className={`h-5 w-5 text-gray-400 flex-shrink-0 ml-2 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-4 pt-1 text-gray-500 text-sm font-light">{faq.a}</div>
+                  <div className="px-5 pb-4 pt-1 text-gray-500 text-sm font-normal">{faq.a}</div>
                 )}
               </div>
             ))}
@@ -220,7 +220,7 @@ export default function PricingPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-secondary/10" />
           <div className="relative">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">Still not sure?</h2>
-            <p className="text-gray-400 max-w-md mx-auto mb-8 font-light">
+            <p className="text-gray-400 max-w-md mx-auto mb-8 font-normal">
               Start with our free plan and upgrade when you're ready. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

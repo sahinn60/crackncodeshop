@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Package, Users, ShoppingCart,
   Settings, LogOut, Store, Menu, X, BarChart2,
   Tag, Bell, ChevronRight, FolderTree, Shield,
-  Layers, Link2, Flame, FileText, Eye,
+  Layers, Link2, Flame, FileText, Eye, Image, MessageSquare,
 } from 'lucide-react';
 
 const navigation = [
@@ -20,7 +20,9 @@ const navigation = [
   { name: 'Flash Sales', href: '/admin/flash-sales',   icon: Flame,           permission: 'products' },
   { name: 'Upsells',     href: '/admin/upsells',       icon: Link2,           permission: 'products' },
   { name: 'Landing Pages', href: '/admin/landing-pages', icon: FileText,        permission: 'products' },
+  { name: 'Logo Showcase', href: '/admin/logo-showcase',  icon: Image,           permission: 'settings' },
   { name: 'Orders',      href: '/admin/orders',       icon: ShoppingCart,    permission: 'orders' },
+  { name: 'Reviews',     href: '/admin/reviews',      icon: MessageSquare,   permission: 'products' },
   { name: 'Users',       href: '/admin/users',        icon: Users,           permission: 'users' },
   { name: 'Analytics',   href: '/admin/analytics',    icon: BarChart2,       permission: 'analytics' },
   { name: 'Coupons',     href: '/admin/coupons',      icon: Tag,             permission: 'coupons' },
@@ -160,15 +162,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden font-light tracking-tight">
-      <aside className="w-64 bg-gray-900 hidden md:flex flex-col flex-shrink-0 font-light tracking-tight">
+    <div className="flex h-screen bg-gray-50 overflow-hidden tracking-tight">
+      <aside className="w-64 bg-gray-900 hidden md:flex flex-col flex-shrink-0 tracking-tight">
         {sidebarContent}
       </aside>
 
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/60" onClick={closeSidebar} />
-          <aside className="absolute left-0 top-0 h-full w-64 bg-gray-900 flex flex-col z-10 font-light tracking-tight">
+          <aside className="absolute left-0 top-0 h-full w-64 bg-gray-900 flex flex-col z-10 tracking-tight">
             {sidebarContent}
           </aside>
         </div>

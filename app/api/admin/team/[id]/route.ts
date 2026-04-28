@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
+import { isProtectedUser } from '@/lib/protected';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+
+const PROTECTED_ERR = NextResponse.json({ error: 'This user is protected and cannot be modified' }, { status: 403 });
+
+async function getProtectedTarget(id: string) {
+  const target = await prisma.user.findUnique({ where: { id }, select: { email: true, role: true } });
+  if (!target) return { notFound: true, blocked: false };
+  return { notFound: false, blocked: target.role === 'ADMIN' || isProtectedUser(target.email) };
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { error } = requireAdmin(req);
   if (error) return error;
   const { id } = await params;
+
+  const target = await getProtectedTarget(id);
+  if (target.notFound) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  if (target.blocked) return PROTECTED_ERR;
 
   try {
     const { permissions, name } = await req.json();
@@ -30,6 +43,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { error } = requireAdmin(req);
   if (error) return error;
   const { id } = await params;
+
+  const target = await getProtectedTarget(id);
+  if (target.notFound) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  if (target.blocked) return PROTECTED_ERR;
 
   try {
     // Cascade delete all related records
@@ -62,6 +79,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { error } = requireAdmin(req);
   if (error) return error;
   const { id } = await params;
+
+  const target = await getProtectedTarget(id);
+  if (target.notFound) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  if (target.blocked) return PROTECTED_ERR;
 
   try {
     const newPassword = crypto.randomBytes(8).toString('base64url');

@@ -1,104 +1,107 @@
+import LegalPageTemplate from '@/components/shop/LegalPageTemplate';
+
+const sections = [
+  {
+    id: 'overview',
+    title: { en: 'Overview', bn: 'সংক্ষিপ্ত বিবরণ' },
+    content: {
+      en: '<p>This Refund Policy outlines the terms and conditions under which refunds may be issued for purchases made on CrackNCode. By completing a purchase on our website, you agree to the terms described below.</p>',
+      bn: '<p>এই রিফান্ড নীতি CrackNCode-এ করা ক্রয়ের জন্য কোন শর্তে রিফান্ড দেওয়া হতে পারে তা বর্ণনা করে। আমাদের ওয়েবসাইটে ক্রয় সম্পন্ন করে, আপনি নিচে বর্ণিত শর্তাবলীতে সম্মত হন।</p>',
+    },
+  },
+  {
+    id: 'digital-products',
+    title: { en: '1. Nature of Digital Products', bn: '১. ডিজিটাল পণ্যের প্রকৃতি' },
+    content: {
+      en: '<p>All products sold on CrackNCode are digital goods. Due to the nature of digital content, items are delivered instantly and are generally non-refundable once accessed or downloaded.</p>',
+      bn: '<p>CrackNCode-এ বিক্রিত সমস্ত পণ্য ডিজিটাল পণ্য। ডিজিটাল কন্টেন্টের প্রকৃতির কারণে, পণ্যগুলি তাৎক্ষণিকভাবে সরবরাহ করা হয় এবং একবার অ্যাক্সেস বা ডাউনলোড করা হলে সাধারণত রিফান্ডযোগ্য নয়।</p>',
+    },
+  },
+  {
+    id: 'non-delivery',
+    title: { en: '2. Non-Delivery of Product', bn: '২. পণ্য সরবরাহ না হওয়া' },
+    content: {
+      en: `<p>If you do not receive access to your purchased product:</p>
+<ul><li>You must notify us within 48 hours of the transaction.</li><li>Our team will investigate and verify the issue.</li><li>If it is confirmed that the product was not delivered due to a system error, we will either:
+<ul><li>Provide immediate access, or</li><li>Issue a refund (if delivery cannot be fulfilled)</li></ul></li></ul>`,
+      bn: `<p>আপনি যদি আপনার ক্রয়কৃত পণ্যে অ্যাক্সেস না পান:</p>
+<ul><li>আপনাকে লেনদেনের ৪৮ ঘণ্টার মধ্যে আমাদের জানাতে হবে।</li><li>আমাদের টিম তদন্ত করবে এবং সমস্যাটি যাচাই করবে।</li><li>যদি নিশ্চিত হয় যে সিস্টেম ত্রুটির কারণে পণ্য সরবরাহ হয়নি, আমরা হয়:
+<ul><li>তাৎক্ষণিক অ্যাক্সেস প্রদান করব, অথবা</li><li>রিফান্ড প্রদান করব (যদি সরবরাহ সম্ভব না হয়)</li></ul></li></ul>`,
+    },
+  },
+  {
+    id: 'product-issues',
+    title: { en: '3. Product-Related Issues', bn: '৩. পণ্য সম্পর্কিত সমস্যা' },
+    content: {
+      en: `<p>If you experience technical issues or problems with a product:</p>
+<ul><li>You must contact our support team with clear details.</li><li>Each case will be reviewed individually.</li><li>Depending on the situation, we may:
+<ul><li>Provide assistance or fixes</li><li>Replace the product</li><li>Approve a refund (at our sole discretion)</li></ul></li></ul>`,
+      bn: `<p>আপনি যদি কোনো পণ্যে প্রযুক্তিগত সমস্যা অনুভব করেন:</p>
+<ul><li>আপনাকে স্পষ্ট বিবরণসহ আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করতে হবে।</li><li>প্রতিটি কেস পৃথকভাবে পর্যালোচনা করা হবে।</li><li>পরিস্থিতির উপর নির্ভর করে, আমরা হয়তো:
+<ul><li>সহায়তা বা সমাধান প্রদান করব</li><li>পণ্য প্রতিস্থাপন করব</li><li>রিফান্ড অনুমোদন করব (আমাদের একক বিবেচনায়)</li></ul></li></ul>`,
+    },
+  },
+  {
+    id: 'processing',
+    title: { en: '4. Refund Processing', bn: '৪. রিফান্ড প্রক্রিয়াকরণ' },
+    content: {
+      en: `<p>If a refund is approved:</p>
+<ul><li>It will be processed within 2–3 business days</li><li>The actual time for the funds to reflect may vary depending on your payment provider</li></ul>`,
+      bn: `<p>রিফান্ড অনুমোদিত হলে:</p>
+<ul><li>এটি ২-৩ কার্যদিবসের মধ্যে প্রক্রিয়া করা হবে</li><li>আপনার পেমেন্ট প্রদানকারীর উপর নির্ভর করে অর্থ প্রতিফলিত হতে সময় ভিন্ন হতে পারে</li></ul>`,
+    },
+  },
+  {
+    id: 'non-refundable',
+    title: { en: '5. Non-Refundable Situations', bn: '৫. রিফান্ডযোগ্য নয় এমন পরিস্থিতি' },
+    content: {
+      en: `<p>Refund requests will not be accepted in the following cases:</p>
+<ul><li>The product has already been accessed or downloaded</li><li>Change of mind after purchase</li><li>Lack of knowledge or inability to use the product</li><li>Accidental or incorrect purchase by the user</li></ul>`,
+      bn: `<p>নিম্নলিখিত ক্ষেত্রে রিফান্ড অনুরোধ গ্রহণ করা হবে না:</p>
+<ul><li>পণ্য ইতিমধ্যে অ্যাক্সেস বা ডাউনলোড করা হয়েছে</li><li>ক্রয়ের পরে মন পরিবর্তন</li><li>পণ্য ব্যবহারে জ্ঞানের অভাব বা অক্ষমতা</li><li>ব্যবহারকারীর দ্বারা দুর্ঘটনাজনিত বা ভুল ক্রয়</li></ul>`,
+    },
+  },
+  {
+    id: 'fraud',
+    title: { en: '6. Fraud Prevention & Abuse', bn: '৬. জালিয়াতি প্রতিরোধ ও অপব্যবহার' },
+    content: {
+      en: `<p>To protect our platform:</p>
+<ul><li>We reserve the right to deny refund requests in cases of suspicious or abusive behavior</li><li>Accounts involved in misuse, fraud, or unauthorized sharing may be restricted or terminated</li></ul>`,
+      bn: `<p>আমাদের প্ল্যাটফর্ম সুরক্ষিত রাখতে:</p>
+<ul><li>সন্দেহজনক বা অপব্যবহারমূলক আচরণের ক্ষেত্রে রিফান্ড অনুরোধ প্রত্যাখ্যান করার অধিকার আমরা সংরক্ষণ করি</li><li>অপব্যবহার, জালিয়াতি বা অননুমোদিত শেয়ারিংয়ে জড়িত অ্যাকাউন্ট সীমাবদ্ধ বা বন্ধ করা হতে পারে</li></ul>`,
+    },
+  },
+  {
+    id: 'liability',
+    title: { en: '7. Limitation of Liability', bn: '৭. দায়বদ্ধতার সীমাবদ্ধতা' },
+    content: {
+      en: '<p>CrackNCode shall not be held liable for any indirect or incidental losses arising from the use of our digital products.</p>',
+      bn: '<p>আমাদের ডিজিটাল পণ্য ব্যবহার থেকে উদ্ভূত কোনো পরোক্ষ বা আনুষঙ্গিক ক্ষতির জন্য CrackNCode দায়ী থাকবে না।</p>',
+    },
+  },
+  {
+    id: 'updates',
+    title: { en: '8. Policy Updates', bn: '৮. নীতি আপডেট' },
+    content: {
+      en: '<p>We reserve the right to modify this Refund Policy at any time. Updated versions will be posted on this page.</p>',
+      bn: '<p>আমরা যেকোনো সময় এই রিফান্ড নীতি পরিবর্তন করার অধিকার সংরক্ষণ করি। আপডেট সংস্করণ এই পৃষ্ঠায় পোস্ট করা হবে।</p>',
+    },
+  },
+  {
+    id: 'contact',
+    title: { en: '9. Contact Information', bn: '৯. যোগাযোগের তথ্য' },
+    content: {
+      en: '<p>For any refund-related inquiries:</p><p>📧 Email: <a href="mailto:support@crackncode.shop">support@crackncode.shop</a></p><p>🌐 Website: <a href="https://crackncode.shop">crackncode.shop</a></p>',
+      bn: '<p>রিফান্ড সম্পর্কিত যেকোনো জিজ্ঞাসার জন্য:</p><p>📧 ইমেইল: <a href="mailto:support@crackncode.shop">support@crackncode.shop</a></p><p>🌐 ওয়েবসাইট: <a href="https://crackncode.shop">crackncode.shop</a></p>',
+    },
+  },
+];
+
 export default function RefundPage() {
   return (
-    <div className="min-h-screen bg-light">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl py-12 sm:py-20">
-        <h1 className="text-3xl sm:text-4xl font-semibold text-dark tracking-tight mb-2">Refund Policy</h1>
-        <p className="text-sm text-gray-400 mb-10">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
-
-        <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
-          <p>
-            This Refund Policy outlines the terms and conditions under which refunds may be issued for purchases made on CrackNCode. By completing a purchase on our website, you agree to the terms described below.
-          </p>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">1. Nature of Digital Products</h2>
-            <p>All products sold on CrackNCode are digital goods. Due to the nature of digital content, items are delivered instantly and are generally non-refundable once accessed or downloaded.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">2. Non-Delivery of Product</h2>
-            <p className="mb-2">If you do not receive access to your purchased product:</p>
-            <ul className="list-disc ml-5 space-y-0.5 text-gray-500">
-              <li>You must notify us within 48 hours of the transaction.</li>
-              <li>Our team will investigate and verify the issue.</li>
-              <li>If it is confirmed that the product was not delivered due to a system error, we will either:
-                <ul className="list-disc ml-5 mt-1 space-y-0.5">
-                  <li>Provide immediate access, or</li>
-                  <li>Issue a refund (if delivery cannot be fulfilled)</li>
-                </ul>
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">3. Product-Related Issues</h2>
-            <p className="mb-2">If you experience technical issues or problems with a product:</p>
-            <ul className="list-disc ml-5 space-y-0.5 text-gray-500">
-              <li>You must contact our support team with clear details.</li>
-              <li>Each case will be reviewed individually.</li>
-              <li>Depending on the situation, we may:
-                <ul className="list-disc ml-5 mt-1 space-y-0.5">
-                  <li>Provide assistance or fixes</li>
-                  <li>Replace the product</li>
-                  <li>Approve a refund (at our sole discretion)</li>
-                </ul>
-              </li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">4. Refund Processing</h2>
-            <p className="mb-2">If a refund is approved:</p>
-            <ul className="list-disc ml-5 space-y-0.5 text-gray-500">
-              <li>It will be processed within 2–3 business days</li>
-              <li>The actual time for the funds to reflect may vary depending on your payment provider</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">5. Non-Refundable Situations</h2>
-            <p className="mb-2">Refund requests will not be accepted in the following cases:</p>
-            <ul className="list-disc ml-5 space-y-0.5 text-gray-500">
-              <li>The product has already been accessed or downloaded</li>
-              <li>Change of mind after purchase</li>
-              <li>Lack of knowledge or inability to use the product</li>
-              <li>Accidental or incorrect purchase by the user</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">6. Fraud Prevention &amp; Abuse</h2>
-            <p>To protect our platform:</p>
-            <ul className="list-disc ml-5 space-y-0.5 text-gray-500 mt-2">
-              <li>We reserve the right to deny refund requests in cases of suspicious or abusive behavior</li>
-              <li>Accounts involved in misuse, fraud, or unauthorized sharing may be restricted or terminated</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">7. Limitation of Liability</h2>
-            <p>CrackNCode shall not be held liable for any indirect or incidental losses arising from the use of our digital products.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">8. Policy Updates</h2>
-            <p>We reserve the right to modify this Refund Policy at any time. Updated versions will be posted on this page.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-medium text-dark mb-3">9. Contact Information</h2>
-            <p className="mb-2">For any refund-related inquiries:</p>
-            <div className="space-y-1">
-              <p>📧 Email: <a href="mailto:support@crackncode.shop" className="text-primary hover:underline">support@crackncode.shop</a></p>
-              <p>🌐 Website: <a href="https://crackncode.shop" className="text-primary hover:underline">crackncode.shop</a></p>
-            </div>
-          </section>
-
-          <div className="pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-400">By purchasing from CrackNCode, you acknowledge that you have read, understood, and agreed to this Refund Policy.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <LegalPageTemplate
+      title={{ en: 'Refund Policy', bn: 'রিফান্ড নীতি' }}
+      sections={sections}
+    />
   );
 }

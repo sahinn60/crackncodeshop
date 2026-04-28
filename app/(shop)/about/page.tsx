@@ -56,7 +56,7 @@ export default function FeaturesPage() {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
               Everything you need to <span className="text-primary">build faster</span>
             </h1>
-            <p className="text-gray-400 max-w-xl mx-auto text-base sm:text-lg font-light">
+            <p className="text-gray-400 max-w-xl mx-auto text-base sm:text-lg font-normal">
               Premium digital products with clean code, modern design, and world-class support.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
@@ -98,7 +98,7 @@ export default function FeaturesPage() {
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold text-dark">Why choose Crackncode?</h2>
-          <p className="mt-3 text-gray-500 max-w-lg mx-auto font-light">
+          <p className="mt-3 text-gray-500 max-w-lg mx-auto font-normal">
             We obsess over quality so you can focus on shipping.
           </p>
         </div>
@@ -120,7 +120,7 @@ export default function FeaturesPage() {
                 <f.icon className={`h-5 w-5 ${f.color}`} />
               </div>
               <h3 className="font-bold text-dark mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-500 font-light leading-relaxed">{f.desc}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
             </motion.div>
           ))}
         </motion.div>
@@ -131,7 +131,7 @@ export default function FeaturesPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-dark">How it works</h2>
-            <p className="mt-3 text-gray-500 font-light">Three simple steps to get started.</p>
+            <p className="mt-3 text-gray-600">Three simple steps to get started.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto">
@@ -151,7 +151,7 @@ export default function FeaturesPage() {
                   <div className="hidden md:block absolute top-7 left-[60%] w-[80%] border-t-2 border-dashed border-gray-200" />
                 )}
                 <h3 className="font-bold text-dark text-lg mb-2">{s.title}</h3>
-                <p className="text-sm text-gray-500 font-light max-w-xs mx-auto">{s.desc}</p>
+                <p className="text-sm text-gray-600 max-w-xs mx-auto">{s.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -172,7 +172,7 @@ export default function FeaturesPage() {
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
                 Built for developers,<br />designed for everyone
               </h2>
-              <p className="text-gray-400 font-light mb-6 max-w-md">
+              <p className="text-gray-400 font-normal mb-6 max-w-md">
                 Every product is crafted with clean, well-documented code and pixel-perfect design. 
                 Whether you're a solo developer or a team, our assets help you ship faster.
               </p>
@@ -208,7 +208,7 @@ export default function FeaturesPage() {
       <section className="bg-white py-12 sm:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
           <h2 className="text-2xl sm:text-3xl font-bold text-dark mb-4">Ready to get started?</h2>
-          <p className="text-gray-500 font-light mb-8">
+          <p className="text-gray-600 mb-8">
             Join thousands of developers and designers who trust Crackncode for premium digital assets.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

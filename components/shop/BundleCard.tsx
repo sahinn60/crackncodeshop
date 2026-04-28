@@ -97,12 +97,12 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
 
       <div className="flex flex-1 flex-col p-2.5 sm:p-4">
         <Link href={`/bundles/${bundle.slug}`}>
-          <h3 className="text-xs sm:text-sm font-semibold text-dark group-hover:text-purple-700 transition-colors line-clamp-1">{bundle.name}</h3>
+          <h3 className="text-xs sm:text-sm font-normal text-slate-600 group-hover:text-purple-700 transition-colors line-clamp-1 leading-snug mb-1">{bundle.name}</h3>
         </Link>
 
         {/* Pricing */}
         <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center gap-1.5">
-          <span className="text-sm sm:text-base font-bold text-dark"><Price amount={bundle.bundlePrice} /></span>
+          <span className="text-sm sm:text-base font-semibold text-dark"><Price amount={bundle.bundlePrice} /></span>
           {bundle.discount > 0 && (
             <span className="text-[9px] sm:text-xs text-gray-400 line-through"><Price amount={bundle.originalPrice} /></span>
           )}

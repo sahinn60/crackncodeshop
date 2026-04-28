@@ -16,6 +16,8 @@ export interface SiteSettings {
   facebookPixelId?: string;
   tiktokPixelId?: string;
   tawktoScriptUrl?: string;
+  footerLogoUrl?: string;
+  footerDescription?: string;
   socialLinks: { twitter?: string; facebook?: string; instagram?: string };
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdminOrSubAdmin } from '@/lib/auth';
 
 // In-memory cache — settings rarely change
 let cache: { data: any; expiresAt: number } | null = null;
@@ -15,6 +15,8 @@ function formatSettings(s: any) {
     facebookPixelId: s.facebookPixelId,
     tiktokPixelId: s.tiktokPixelId,
     tawktoScriptUrl: s.tawktoScriptUrl,
+    footerLogoUrl: s.footerLogoUrl,
+    footerDescription: s.footerDescription,
     socialLinks: { twitter: s.socialTwitter, facebook: s.socialFacebook, instagram: s.socialInstagram },
   };
 }
@@ -37,7 +39,7 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  const { error } = requireAdmin(req);
+  const { error } = requireAdminOrSubAdmin(req, 'settings');
   if (error) return error;
 
   const body = await req.json();
@@ -52,6 +54,8 @@ export async function PUT(req: NextRequest) {
       facebookPixelId: body.facebookPixelId,
       tiktokPixelId: body.tiktokPixelId,
       tawktoScriptUrl: body.tawktoScriptUrl,
+      footerLogoUrl: body.footerLogoUrl,
+      footerDescription: body.footerDescription,
       socialTwitter: body.socialLinks?.twitter,
       socialFacebook: body.socialLinks?.facebook,
       socialInstagram: body.socialLinks?.instagram,

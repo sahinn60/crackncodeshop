@@ -164,6 +164,39 @@ export default function AdminSettingsPage() {
 
           <hr className="border-gray-200" />
 
+          {/* Footer */}
+          <div>
+            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Footer</h3>
+            <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+              <div className="sm:col-span-6">
+                <ImageUpload
+                  value={formData.footerLogoUrl || ''}
+                  onChange={url => setFormData(prev => ({ ...prev!, footerLogoUrl: url }))}
+                  label="Footer Logo"
+                  hint="Displayed in the footer. Leave empty to use the main site logo."
+                  folder="crackncode/branding"
+                  previewClass="h-12 w-auto rounded-lg"
+                />
+              </div>
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700">Footer Description</label>
+                <div className="mt-1">
+                  <textarea
+                    name="footerDescription"
+                    value={formData.footerDescription || ''}
+                    onChange={e => setFormData(prev => ({ ...prev!, footerDescription: e.target.value }))}
+                    rows={3}
+                    placeholder="Your premium destination for high-quality digital products..."
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Short description shown below the footer logo.</p>
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-gray-200" />
+
           {/* Tracking */}
           <div>
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Tracking & Analytics</h3>

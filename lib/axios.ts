@@ -7,6 +7,10 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Allow auth store to register itself for sync after token refresh
+let onTokenRefreshed: ((user: any, token: string, refreshToken: string) => void) | null = null;
+export function setOnTokenRefreshed(cb: typeof onTokenRefreshed) { onTokenRefreshed = cb; }
+
 // Attach access token to every request
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
@@ -45,6 +49,13 @@ apiClient.interceptors.response.use(
 
       const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
       localStorage.setItem('auth-token', data.accessToken);
+      if (data.refreshToken) localStorage.setItem('refresh-token', data.refreshToken);
+      document.cookie = `auth-token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
+
+      // Sync Zustand store with fresh user data from refresh
+      if (data.user && onTokenRefreshed) {
+        onTokenRefreshed(data.user, data.accessToken, data.refreshToken);
+      }
 
       queue.forEach(cb => cb(data.accessToken));
       queue = [];
@@ -55,6 +66,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('auth-token');
       localStorage.removeItem('refresh-token');
       document.cookie = 'auth-token=; path=/; max-age=0';
+      if (typeof window !== 'undefined') window.location.href = '/login';
       return Promise.reject(err);
     } finally {
       isRefreshing = false;

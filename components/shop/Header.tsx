@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/Button';
 import { CartDrawer } from '@/components/shop/CartDrawer';
-import { ShoppingCart, LayoutDashboard, User, LogOut, Settings, ShieldCheck, ChevronDown, Search } from 'lucide-react';
+import { ShoppingCart, LayoutDashboard, User, LogOut, Settings, ShieldCheck, ChevronDown, Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '@/lib/axios';
 import { Price } from '@/components/ui/Price';
@@ -29,11 +29,13 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Desktop search
+  // Search state (shared desktop + mobile)
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -62,12 +64,15 @@ export function Header() {
     e?.preventDefault();
     if (!searchQuery.trim()) return;
     setSearchOpen(false);
+    setMobileSearchOpen(false);
+    setSearchQuery('');
     router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   const handleResultClick = (id: string) => {
     setSearchQuery('');
     setSearchOpen(false);
+    setMobileSearchOpen(false);
     router.push(`/products/${id}`);
   };
 
@@ -79,29 +84,31 @@ export function Header() {
     router.push('/');
   };
 
+  const Logo = () => (
+    <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+      {settings?.logoUrl ? (
+        <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-8 md:h-12 w-auto max-w-[140px] md:max-w-[200px] object-contain" />
+      ) : (
+        <span className="text-lg md:text-2xl font-black tracking-tight text-primary">{settings?.siteName || 'Shop'}</span>
+      )}
+    </Link>
+  );
+
   return (
     <>
       <header className={`sticky ${barVisible ? 'top-[42px] max-sm:top-[38px]' : 'top-0'} z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-lg transition-[top] duration-300`}>
-        <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 
-          {/* Left — Logo + Nav */}
+        {/* Desktop header */}
+        <div className="hidden md:flex container mx-auto h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6 lg:gap-8">
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-10 sm:h-12 w-auto max-w-[200px] object-contain" />
-              ) : (
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-primary">{settings?.siteName || 'Shop'}</span>
-              )}
-            </Link>
-            <nav className="hidden md:flex gap-6 lg:gap-8">
-              <Link href="/products" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Products</Link>
-              <Link href="/about" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Features</Link>
-              <Link href="/pricing" className="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Pricing</Link>
+            <Logo />
+            <nav className="flex gap-6 lg:gap-8">
+              <Link href="/products" className="text-sm font-medium text-gray-800 hover:text-primary transition-colors">Products</Link>
+              <Link href="/about" className="text-sm font-medium text-gray-800 hover:text-primary transition-colors">Features</Link>
             </nav>
           </div>
 
-          {/* Center — Search (desktop) */}
-          <div className="hidden md:block flex-1 max-w-md mx-6 lg:mx-10" ref={searchRef}>
+          <div className="flex-1 max-w-md mx-6 lg:mx-10" ref={searchRef}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
@@ -118,22 +125,21 @@ export function Header() {
                       <img src={p.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-dark truncate">{p.title}</p>
-                        <p className="text-xs text-gray-400">{p.category}</p>
+                        <p className="text-xs text-gray-500">{p.category}</p>
                       </div>
                       <span className="text-sm font-bold text-dark flex-shrink-0"><Price amount={p.price} /></span>
                     </button>
                   ))}
                   <button onClick={handleSearchSubmit} className="w-full px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary/5 border-t border-gray-100 transition-colors">
-                    View all results for "{searchQuery}"
+                    View all results for &quot;{searchQuery}&quot;
                   </button>
                 </div>
               )}
             </form>
           </div>
 
-          {/* Right — Cart + Auth (desktop only, mobile uses bottom nav) */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button onClick={openCart} className="hidden md:flex relative p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
+            <button onClick={openCart} className="relative p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-colors">
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
@@ -143,38 +149,25 @@ export function Header() {
             </button>
 
             {isAuthenticated ? (
-              <div className="relative hidden sm:block" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(o => !o)}
-                  className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors"
-                >
+              <div className="relative" ref={dropdownRef}>
+                <button onClick={() => setDropdownOpen(o => !o)} className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
                   {user?.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.name} className="h-8 w-8 rounded-full object-cover border-2 border-gray-200" />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-red-400 flex items-center justify-center text-white text-xs font-bold">
-                      {initials}
-                    </div>
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-red-400 flex items-center justify-center text-white text-xs font-bold">{initials}</div>
                   )}
                   <span className="hidden lg:block text-sm font-medium text-gray-700 max-w-[100px] truncate">{user?.name}</span>
                   <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-
                 <AnimatePresence>
                   {dropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50"
-                    >
+                    <motion.div initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.95 }} transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
                         {user?.avatarUrl ? (
                           <img src={user.avatarUrl} alt={user.name} className="h-10 w-10 rounded-full object-cover border-2 border-gray-200 flex-shrink-0" />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-red-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                            {initials}
-                          </div>
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-red-400 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">{initials}</div>
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
@@ -210,16 +203,73 @@ export function Header() {
               </div>
             ) : (
               <>
-                <Link href="/login" className="hidden sm:block">
-                  <Button variant="ghost" className="rounded-full font-medium">Log in</Button>
-                </Link>
-                <Link href="/register" className="hidden sm:block">
-                  <Button className="bg-primary hover:bg-[#E62828] rounded-full font-semibold shadow-md text-white">Sign up</Button>
-                </Link>
+                <Link href="/login"><Button variant="ghost" className="rounded-full font-medium">Log in</Button></Link>
+                <Link href="/register"><Button className="bg-primary hover:bg-[#E62828] rounded-full font-semibold shadow-md text-white">Sign up</Button></Link>
               </>
             )}
           </div>
         </div>
+
+        {/* Mobile header — centered logo, icons right */}
+        <div className="flex md:hidden h-14 items-center px-3 relative">
+          {/* Left spacer */}
+          <div className="w-20" />
+
+          {/* Center — Logo (absolute center) */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Logo />
+          </div>
+
+          {/* Right — Search */}
+          <div className="ml-auto flex items-center">
+            <button
+              onClick={() => { setMobileSearchOpen(o => !o); setTimeout(() => mobileInputRef.current?.focus(), 150); }}
+              className="p-2 rounded-full text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              {mobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile search dropdown */}
+        <AnimatePresence>
+          {mobileSearchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden border-t border-gray-100 bg-white"
+            >
+              <form onSubmit={handleSearchSubmit} className="px-4 py-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  <input
+                    ref={mobileInputRef}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search products..."
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-4 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 focus:bg-white transition-all"
+                  />
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="mt-2 bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+                    {searchResults.map(p => (
+                      <button key={p.id} onClick={() => handleResultClick(p.id)} className="flex items-center gap-3 w-full px-4 py-3 hover:bg-gray-50 transition-colors text-left">
+                        <img src={p.imageUrl} alt="" className="h-9 w-9 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-dark truncate">{p.title}</p>
+                          <p className="text-xs text-gray-400">{p.category}</p>
+                        </div>
+                        <span className="text-sm font-bold text-dark flex-shrink-0"><Price amount={p.price} /></span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       <CartDrawer />

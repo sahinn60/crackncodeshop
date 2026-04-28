@@ -10,6 +10,7 @@ import {
   FolderTree, MessageSquare, DollarSign, UserPlus, CheckCircle2, Activity,
 } from 'lucide-react';
 import { apiClient } from '@/lib/axios';
+import { useAuthStore } from '@/store/useAuthStore';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/currency';
 import { Price } from '@/components/ui/Price';
@@ -49,14 +50,17 @@ const tooltipStyle = { borderRadius: '8px', border: 'none', boxShadow: '0 4px 6p
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const isAdmin = useAuthStore(s => s.user?.role) === 'ADMIN';
 
   useEffect(() => {
     apiClient.get('/admin/stats').then(({ data }) => setStats(data)).catch(() => {});
   }, []);
 
   const cards = stats ? [
-    { label: 'Total Revenue', value: <Price amount={stats.totalRevenue} />, icon: TrendingUp, color: 'bg-green-50', iconColor: 'text-green-600', border: 'border-green-100' },
-    { label: 'Monthly Revenue', value: <Price amount={stats.monthRevenue} />, icon: DollarSign, color: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100' },
+    ...(isAdmin ? [
+      { label: 'Total Revenue', value: <Price amount={stats.totalRevenue} />, icon: TrendingUp, color: 'bg-green-50', iconColor: 'text-green-600', border: 'border-green-100' },
+      { label: 'Monthly Revenue', value: <Price amount={stats.monthRevenue} />, icon: DollarSign, color: 'bg-emerald-50', iconColor: 'text-emerald-600', border: 'border-emerald-100' },
+    ] : []),
     { label: 'Total Orders', value: stats.totalOrders.toLocaleString(), icon: ShoppingCart, color: 'bg-indigo-50', iconColor: 'text-indigo-600', border: 'border-indigo-100' },
     { label: 'Completed', value: stats.completedOrders.toLocaleString(), icon: CheckCircle2, color: 'bg-teal-50', iconColor: 'text-teal-600', border: 'border-teal-100' },
     { label: 'Products', value: stats.totalProducts.toLocaleString(), icon: Package, color: 'bg-blue-50', iconColor: 'text-blue-600', border: 'border-blue-100' },
@@ -102,11 +106,13 @@ export default function AdminDashboardPage() {
 
       {/* KPI Row */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl p-5 text-white">
-            <p className="text-xs opacity-70">Avg Order Value</p>
-            <p className="text-xl font-semibold mt-1"><Price amount={stats.avgOrderValue} /></p>
-          </div>
+        <div className={`grid grid-cols-1 ${isAdmin ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
+          {isAdmin && (
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl p-5 text-white">
+              <p className="text-xs opacity-70">Avg Order Value</p>
+              <p className="text-xl font-semibold mt-1"><Price amount={stats.avgOrderValue} /></p>
+            </div>
+          )}
           <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-5 text-white">
             <p className="text-xs opacity-70">Total Reviews</p>
             <p className="text-xl font-semibold mt-1">{stats.totalReviews}</p>
@@ -119,29 +125,31 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Row 1: Monthly Revenue Trend + Order Status Donut */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-900 mb-4">Revenue — Last 6 Months</h3>
-          <div className="h-56">
-            {stats ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.monthlyRevenue} margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.15} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-                  <Tooltip formatter={(v: any) => [formatPrice(v), 'Revenue']} contentStyle={tooltipStyle} />
-                  <Area type="monotone" dataKey="revenue" stroke="#6366F1" strokeWidth={2} fill="url(#revGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : <Skeleton className="h-full" />}
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-3' : ''} gap-5`}>
+        {isAdmin && (
+          <div className="lg:col-span-2 bg-white p-5 rounded-xl border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Revenue — Last 6 Months</h3>
+            <div className="h-56">
+              {stats ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats.monthlyRevenue} margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                    <Tooltip formatter={(v: any) => [formatPrice(v), 'Revenue']} contentStyle={tooltipStyle} />
+                    <Area type="monotone" dataKey="revenue" stroke="#6366F1" strokeWidth={2} fill="url(#revGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : <Skeleton className="h-full" />}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white p-5 rounded-xl border border-gray-200">
           <h3 className="text-sm font-medium text-gray-900 mb-4">Order Status</h3>
@@ -173,23 +181,25 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Row 2: Weekly Sales Bar + Visitors */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white p-5 rounded-xl border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-900 mb-4">Sales — Last 7 Days</h3>
-          <div className="h-52">
-            {stats ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.chartData} margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
-                  <Tooltip formatter={(v: any) => [formatPrice(v), 'Sales']} contentStyle={tooltipStyle} />
-                  <Bar dataKey="sales" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : <Skeleton className="h-full" />}
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-5`}>
+        {isAdmin && (
+          <div className="bg-white p-5 rounded-xl border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Sales — Last 7 Days</h3>
+            <div className="h-52">
+              {stats ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.chartData} margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                    <Tooltip formatter={(v: any) => [formatPrice(v), 'Sales']} contentStyle={tooltipStyle} />
+                    <Bar dataKey="sales" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <Skeleton className="h-full" />}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white p-5 rounded-xl border border-gray-200">
           <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center gap-2">
@@ -212,30 +222,32 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Row 3: Category Revenue + Revenue Trend Line */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white p-5 rounded-xl border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-900 mb-4">Revenue by Category</h3>
-          {stats && stats.categoryData.length > 0 ? (
-            <div className="space-y-3">
-              {stats.categoryData.map((cat, i) => {
-                const max = stats.categoryData[0]?.value || 1;
-                const pct = Math.round((cat.value / max) * 100);
-                return (
-                  <div key={cat.name}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-600 truncate">{cat.name}</span>
-                      <span className="text-xs font-medium text-gray-900">{formatPrice(cat.value)}</span>
+      {/* Row 3: Category Revenue + Monthly Orders */}
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-5`}>
+        {isAdmin && (
+          <div className="bg-white p-5 rounded-xl border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Revenue by Category</h3>
+            {stats && stats.categoryData.length > 0 ? (
+              <div className="space-y-3">
+                {stats.categoryData.map((cat, i) => {
+                  const max = stats.categoryData[0]?.value || 1;
+                  const pct = Math.round((cat.value / max) * 100);
+                  return (
+                    <div key={cat.name}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-gray-600 truncate">{cat.name}</span>
+                        <span className="text-xs font-medium text-gray-900">{formatPrice(cat.value)}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: CAT_COLORS[i % CAT_COLORS.length] }} />
+                      </div>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: CAT_COLORS[i % CAT_COLORS.length] }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : <Skeleton className="h-48" />}
-        </div>
+                  );
+                })}
+              </div>
+            ) : <Skeleton className="h-48" />}
+          </div>
+        )}
 
         <div className="bg-white p-5 rounded-xl border border-gray-200">
           <h3 className="text-sm font-medium text-gray-900 mb-4">Monthly Orders</h3>
@@ -276,7 +288,7 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-gray-400 truncate">{o.items.map(i => i.product.title).join(', ')}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                  <span className="text-sm font-medium text-gray-900"><Price amount={o.total} /></span>
+                  {isAdmin && <span className="text-sm font-medium text-gray-900"><Price amount={o.total} /></span>}
                   <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${o.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : o.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>{o.status}</span>
                 </div>
               </div>

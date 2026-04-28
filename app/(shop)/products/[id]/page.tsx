@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import {
   Star, Check, ArrowLeft, ShieldCheck, Calendar, Tag, ShoppingCart,
-  Zap, MessageSquare, TrendingUp, Award, User, Send, Volume2,
+  Zap, MessageSquare, TrendingUp, Award, User, Send, Volume2, BadgeCheck, Clock, CheckCircle,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,8 +20,11 @@ interface Review {
   id: string;
   rating: number;
   comment: string;
+  status?: string;
+  guestName?: string | null;
   createdAt: string;
   user: { id: string; name: string; avatarUrl: string };
+  isVerifiedPurchase?: boolean;
 }
 
 function extractVideoId(url: string): string | null {
@@ -83,17 +86,25 @@ function StarRating({ value, onChange, size = 'md' }: { value: number; onChange?
 }
 
 function ReviewCard({ review }: { review: Review }) {
+  const displayName = review.guestName || review.user.name;
   return (
     <div className="border border-gray-100 rounded-2xl p-5 hover:border-gray-200 transition-colors">
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary font-bold text-sm">
-          {review.user.avatarUrl ? (
+          {!review.guestName && review.user.avatarUrl ? (
             <img src={review.user.avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
-          ) : review.user.name.charAt(0).toUpperCase()}
+          ) : displayName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-dark text-sm">{review.user.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-dark text-sm">{displayName}</p>
+              {review.isVerifiedPurchase && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">
+                  <BadgeCheck className="h-3 w-3" /> Verified
+                </span>
+              )}
+            </div>
             <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
           </div>
           <StarRating value={review.rating} size="sm" />
@@ -101,6 +112,29 @@ function ReviewCard({ review }: { review: Review }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function SuccessToast({ show }: { show: boolean }) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+          className="fixed bottom-6 right-6 z-50 bg-white border border-green-200 shadow-xl rounded-2xl px-5 py-4 flex items-start gap-3 max-w-sm"
+        >
+          <div className="h-9 w-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-dark">Your review has been submitted</p>
+            <p className="text-xs text-gray-400 mt-0.5">We'll publish it shortly</p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -113,6 +147,7 @@ export default function ProductDetailsPage() {
 
   const [product, setProduct] = useState<any>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [userReview, setUserReview] = useState<Review | null>(null);
   const [trending, setTrending] = useState<Product[]>([]);
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,6 +158,7 @@ export default function ProductDetailsPage() {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -133,7 +169,8 @@ export default function ProductDetailsPage() {
           apiClient.get('/products', { params: { limit: 50 } }),
         ]);
         setProduct(prod);
-        setReviews(revs);
+        setReviews(revs.reviews || revs);
+        if (revs.userReview) setUserReview(revs.userReview);
 
         const others = all.products.filter((p: Product) => p.id !== id);
         // Trending = newest products
@@ -162,12 +199,11 @@ export default function ProductDetailsPage() {
     setReviewError('');
     try {
       const { data } = await apiClient.post(`/products/${id}/reviews`, { rating: reviewRating, comment: reviewComment });
-      setReviews(prev => [data, ...prev]);
+      setUserReview(data.review);
       setReviewRating(0);
       setReviewComment('');
-      // Refresh product to get updated rating
-      const { data: updated } = await apiClient.get(`/products/${id}`);
-      setProduct(updated);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
     } catch (err: any) {
       setReviewError(err.response?.data?.error || 'Failed to submit review');
     } finally {
@@ -175,7 +211,7 @@ export default function ProductDetailsPage() {
     }
   };
 
-  const alreadyReviewed = reviews.some(r => r.user.id === authUser?.id);
+  const alreadyReviewed = !!userReview || reviews.some(r => r.user.id === authUser?.id);
   const ratingDistribution = [5, 4, 3, 2, 1].map(star => ({
     star,
     count: reviews.filter(r => r.rating === star).length,
@@ -287,7 +323,7 @@ export default function ProductDetailsPage() {
           <div className="flex border-b border-gray-200 mb-6 sm:mb-8 gap-1 overflow-x-auto">
             {[
               { key: 'description', label: 'Description', icon: Tag },
-              { key: 'reviews', label: `Reviews (${reviews.length})`, icon: MessageSquare },
+              { key: 'reviews', label: `Reviews (${product.reviewCount || reviews.length})`, icon: MessageSquare },
             ].map(tab => (
               <button
                 key={tab.key}
@@ -401,9 +437,21 @@ export default function ProductDetailsPage() {
                       </div>
                     )}
 
-                    {alreadyReviewed && (
+                    {userReview && userReview.status === 'pending' && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-700 font-medium text-center flex items-center justify-center gap-2">
+                        <Clock className="h-4 w-4" /> Your review is under review — we'll publish it shortly
+                      </div>
+                    )}
+
+                    {userReview && userReview.status === 'rejected' && (
+                      <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700 font-medium text-center">
+                        Your review needs changes. Please edit and resubmit.
+                      </div>
+                    )}
+
+                    {alreadyReviewed && !userReview && (
                       <div className="bg-green-50 border border-green-200 rounded-2xl p-4 text-sm text-green-700 font-medium text-center">
-                        ✓ You've already reviewed this product
+                        ✓ Your review has been published
                       </div>
                     )}
 
@@ -417,6 +465,7 @@ export default function ProductDetailsPage() {
                     ) : (
                       <div className="space-y-4">
                         {reviews.map(r => <ReviewCard key={r.id} review={r} />)}
+                        <p className="text-xs text-gray-400 text-center pt-2">✦ New reviews are being added shortly</p>
                       </div>
                     )}
                   </div>
@@ -471,6 +520,7 @@ export default function ProductDetailsPage() {
           </div>
         )}
       </div>
+      <SuccessToast show={showToast} />
     </div>
   );
 }

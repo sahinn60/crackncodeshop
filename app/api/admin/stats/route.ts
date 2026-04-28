@@ -3,8 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { requireAdminOrSubAdmin } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  const { error } = requireAdminOrSubAdmin(req);
+  const { error, user } = requireAdminOrSubAdmin(req);
   if (error) return error;
+
+  const isAdmin = user!.role === 'ADMIN';
 
   try {
   const now = new Date();
@@ -100,21 +102,21 @@ export async function GET(req: NextRequest) {
     totalUsers,
     totalProducts,
     totalOrders: orders.length,
-    totalRevenue,
-    monthRevenue,
-    avgOrderValue,
+    totalRevenue: isAdmin ? totalRevenue : undefined,
+    monthRevenue: isAdmin ? monthRevenue : undefined,
+    avgOrderValue: isAdmin ? avgOrderValue : undefined,
     completedOrders,
     newUsersThisWeek,
     totalCategories,
     totalReviews,
-    chartData,
+    chartData: isAdmin ? chartData : undefined,
     recentOrders,
     topProducts,
     recentReviews,
     orderStatusData,
-    monthlyRevenue,
+    monthlyRevenue: isAdmin ? monthlyRevenue : undefined,
     visitorsByDay,
-    categoryData,
+    categoryData: isAdmin ? categoryData : undefined,
   });
   } catch (err: any) {
     console.error('Stats error:', err);

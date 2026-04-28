@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
+  const sort = searchParams.get('sort') || '';
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit = Math.min(100, parseInt(searchParams.get('limit') || '16'));
 
@@ -22,9 +23,17 @@ export async function GET(req: NextRequest) {
     ...(category && category !== 'All' && { category }),
   };
 
+  const orderByMap: Record<string, any> = {
+    'price-asc': { price: 'asc' },
+    'price-desc': { price: 'desc' },
+    'rating': { rating: 'desc' },
+    'newest': { createdAt: 'desc' },
+  };
+  const orderBy = orderByMap[sort] || { createdAt: 'desc' };
+
   const [products, total] = await Promise.all([
     prisma.product.findMany({
-      where, skip: (page - 1) * limit, take: limit, orderBy: { createdAt: 'desc' },
+      where, skip: (page - 1) * limit, take: limit, orderBy,
       omit: { fileUrl: true },
     }),
     prisma.product.count({ where }),

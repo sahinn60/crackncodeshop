@@ -68,7 +68,7 @@ export function ProductCard({ product }: { product: Product }) {
           )}
 
           {/* Hover action icons */}
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 opacity-0 translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 z-10">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:opacity-0 sm:translate-x-3 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 transition-all duration-300 z-10">
             <button className="bg-white/95 backdrop-blur-sm p-1.5 sm:p-2 rounded-full text-gray-500 hover:text-primary hover:bg-white shadow-md border border-gray-100 transition-all hover:scale-110 active:scale-95" title="Wishlist" onClick={(e) => e.preventDefault()}>
               <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </button>
@@ -82,17 +82,17 @@ export function ProductCard({ product }: { product: Product }) {
           {/* Rating */}
           <div className="flex items-center gap-0.5 sm:gap-1 mb-1">
             <Star className="h-3 w-3 fill-accent text-accent" />
-            <span className="text-[10px] sm:text-xs font-semibold text-gray-700">{product.rating}</span>
+            <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{product.rating}</span>
           </div>
 
           {/* Title */}
           <Link href={`/products/${product.id}`}>
-            <h3 className="text-xs sm:text-sm font-medium text-dark group-hover:text-primary transition-colors line-clamp-1">{product.title}</h3>
+            <h3 className="text-xs sm:text-sm font-normal text-slate-600 group-hover:text-primary transition-colors line-clamp-1 leading-snug mb-1">{product.title}</h3>
           </Link>
 
           {/* Price */}
           <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center gap-1.5">
-            <span className="text-sm sm:text-base font-bold text-dark"><Price amount={product.price} /></span>
+            <span className="text-sm sm:text-base font-semibold text-dark"><Price amount={product.price} /></span>
             {product.oldPrice && product.oldPrice > product.price && (
               <span className="text-[9px] sm:text-xs text-gray-400 line-through"><Price amount={product.oldPrice} /></span>
             )}
