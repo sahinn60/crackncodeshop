@@ -46,7 +46,6 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(1);
 
-  const [catOpen, setCatOpen] = useState(false);
   const [expandedCat, setExpandedCat] = useState<string | null>(null);
 
   const defaultBanners = [
@@ -114,112 +113,80 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 mt-2 sm:mt-4">
         <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
-          {/* Categories Mega Menu — desktop */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            {/* Toggle button */}
-            <button
-              onClick={() => setCatOpen(o => !o)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-dark text-white rounded-t-lg text-sm font-medium"
-            >
-              <span className="flex items-center gap-2">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                Browse Categories
-              </span>
-              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${catOpen ? 'rotate-180' : ''}`} />
-            </button>
+          {/* Categories Sidebar — desktop */}
+          <div className="hidden lg:block w-60 flex-shrink-0">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden h-fit sticky top-20">
+              {/* Header */}
+              <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Categories</h3>
+              </div>
 
-            {/* Collapsible category list */}
-            <AnimatePresence>
-              {catOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="overflow-hidden bg-white border border-t-0 border-gray-100 rounded-b-lg shadow-lg"
+              {/* Category list — always visible */}
+              <div className="py-1">
+                <Link
+                  href="/products"
+                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
                 >
-                  <div className="py-1">
-                    <Link
-                      href="/products"
-                      onClick={() => setCatOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
-                    >
-                      <Package className="h-4 w-4 text-gray-400" />
-                      All Products
-                    </Link>
+                  <Package className="h-4 w-4 text-gray-400" />
+                  All Products
+                </Link>
 
-                    {categories.map(cat => (
-                      <div key={cat.id} className="relative group/cat">
-                        <div className="flex items-center">
-                          <Link
-                            href={`/products?category=${encodeURIComponent(cat.name)}`}
-                            onClick={() => setCatOpen(false)}
-                            className="flex-1 flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors"
-                          >
-                            {cat.imageUrl ? (
-                              <img src={cat.imageUrl} alt="" className="h-5 w-5 rounded object-cover flex-shrink-0" />
-                            ) : (
-                              <span className="h-5 w-5 rounded bg-gray-100 flex items-center justify-center text-[10px] font-medium text-gray-400 flex-shrink-0">{cat.name.charAt(0)}</span>
-                            )}
-                            {cat.name}
-                          </Link>
-                          {cat.children.length > 0 && (
-                            <button
-                              onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)}
-                              className="px-3 py-2.5 text-gray-400 hover:text-primary transition-colors"
-                            >
-                              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${expandedCat === cat.id ? 'rotate-180' : ''}`} />
-                            </button>
-                          )}
-                        </div>
+                {categories.map(cat => (
+                  <div key={cat.id}>
+                    {/* Parent category row */}
+                    <div className="flex items-center">
+                      <Link
+                        href={`/products?category=${encodeURIComponent(cat.name)}`}
+                        className={`flex-1 flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
+                          expandedCat === cat.id ? 'text-primary font-medium bg-primary/5' : 'text-gray-700 hover:bg-primary/5 hover:text-primary'
+                        }`}
+                      >
+                        {cat.imageUrl ? (
+                          <img src={cat.imageUrl} alt="" className="h-4 w-4 rounded object-cover flex-shrink-0" />
+                        ) : (
+                          <span className="h-4 w-4 rounded bg-gray-100 flex items-center justify-center text-[9px] font-medium text-gray-400 flex-shrink-0">{cat.name.charAt(0)}</span>
+                        )}
+                        {cat.name}
+                      </Link>
+                      {cat.children.length > 0 && (
+                        <button
+                          onClick={() => setExpandedCat(expandedCat === cat.id ? null : cat.id)}
+                          className="px-3 py-2.5 text-gray-400 hover:text-primary transition-colors"
+                        >
+                          <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${expandedCat === cat.id ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                    </div>
 
-                        {/* Subcategories — expand/collapse */}
-                        <AnimatePresence>
-                          {expandedCat === cat.id && cat.children.length > 0 && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden bg-gray-50/50"
-                            >
-                              {cat.children.map(sub => (
-                                <Link
-                                  key={sub.id}
-                                  href={`/products?category=${encodeURIComponent(sub.name)}`}
-                                  onClick={() => setCatOpen(false)}
-                                  className="flex items-center gap-2 pl-12 pr-4 py-2 text-xs text-gray-500 hover:text-primary hover:bg-primary/5 transition-colors"
-                                >
-                                  <span className="h-1 w-1 rounded-full bg-gray-300" />
-                                  {sub.name}
-                                </Link>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        {/* Mega menu flyout on hover — shows subcategories to the right */}
-                        {cat.children.length > 0 && (
-                          <div className="absolute left-full top-0 ml-0 w-56 bg-white border border-gray-100 rounded-lg shadow-xl opacity-0 invisible group-hover/cat:opacity-100 group-hover/cat:visible transition-all duration-200 z-50 py-2">
-                            <p className="px-4 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{cat.name}</p>
+                    {/* Subcategories accordion */}
+                    <AnimatePresence>
+                      {expandedCat === cat.id && cat.children.length > 0 && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="bg-gray-50/60 border-t border-gray-100">
                             {cat.children.map(sub => (
                               <Link
                                 key={sub.id}
                                 href={`/products?category=${encodeURIComponent(sub.name)}`}
-                                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-primary/5 hover:text-primary transition-colors"
+                                className="flex items-center gap-2 pl-11 pr-4 py-2 text-xs text-gray-500 hover:text-primary hover:bg-primary/5 transition-colors"
                               >
-                                <ArrowRight className="h-3 w-3 text-gray-300" />
+                                <span className="h-1 w-1 rounded-full bg-gray-300 flex-shrink-0" />
                                 {sub.name}
                               </Link>
                             ))}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Hero Banner Slider */}
