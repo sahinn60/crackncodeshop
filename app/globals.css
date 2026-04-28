@@ -11,8 +11,10 @@
   
   --animate-marquee: marquee 40s linear infinite;
   --animate-marquee-reverse: marquee-reverse 40s linear infinite;
-  --animate-testimonial-scroll: testimonial-scroll 60s linear infinite;
-  --animate-testimonial-scroll-reverse: testimonial-scroll-reverse 60s linear infinite;
+  --animate-testimonial-scroll: testimonial-scroll 12s linear infinite;
+  --animate-testimonial-scroll-reverse: testimonial-scroll-reverse 12s linear infinite;
+  --animate-testimonial-scroll-mobile: testimonial-scroll 10s linear infinite;
+  --animate-testimonial-scroll-mobile-reverse: testimonial-scroll-reverse 10s linear infinite;
 }
 
 @keyframes marquee {
@@ -456,7 +458,7 @@ p, span, a, li, td, th, label, input, textarea, select, button {
 
 .ann-bar__ticker {
   display: flex; flex-shrink: 0; align-items: center;
-  animation: ann-scroll var(--ticker-duration, 28s) linear infinite; will-change: transform;
+  animation: ann-scroll var(--ticker-duration, 47s) linear infinite; will-change: transform;
 }
 
 .ann-bar__fade {
@@ -509,7 +511,7 @@ p, span, a, li, td, th, label, input, textarea, select, button {
   .ann-chip { font-size: 12px; padding: 0 28px; gap: 6px; }
   .ann-chip__discount { font-size: 9.5px; padding: 2px 8px; }
   .ann-chip__code { font-size: 10.5px; padding: 2px 9px; letter-spacing: 0.1em; }
-  .ann-bar__ticker { animation-duration: calc(var(--ticker-duration, 28s) * 1.5) !important; }
+  .ann-bar__ticker { animation-duration: 70s !important; }
   .ann-bar__fade { width: 28px; }
   .ann-bar__fade--right { right: 30px; }
   .ann-bar__close { right: 5px; width: 20px; height: 20px; }

@@ -7,117 +7,190 @@ export async function GET(req: NextRequest) {
   if (error) return error;
 
   const isAdmin = user!.role === 'ADMIN';
+  const range = req.nextUrl.searchParams.get('range') || '7';
 
   try {
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 86400000);
-  const monthAgo = new Date(now.getTime() - 30 * 86400000);
+    const now = new Date();
+    const rangeMs = range === 'all' ? 0 : parseInt(range) * 86400000;
+    const rangeDate = range === 'all' ? new Date(0) : new Date(now.getTime() - rangeMs);
+    const weekAgo = new Date(now.getTime() - 7 * 86400000);
+    const monthAgo = new Date(now.getTime() - 30 * 86400000);
 
-  const [totalUsers, totalProducts, orders, recentOrders, topProducts, newUsersThisWeek, totalCategories, totalReviews, recentReviews, monthOrders, allProducts, visitors7d] = await Promise.all([
-    prisma.user.count(),
-    prisma.product.count(),
-    prisma.order.findMany({ select: { total: true, createdAt: true, status: true } }),
-    prisma.order.findMany({
-      take: 6,
-      orderBy: { createdAt: 'desc' },
-      include: { user: { select: { name: true, email: true } }, items: { include: { product: { select: { title: true } } } } },
-    }),
-    prisma.product.findMany({
-      take: 5,
-      orderBy: { reviewCount: 'desc' },
-      select: { title: true, category: true, price: true, reviewCount: true },
-    }),
-    prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
-    prisma.category.count().catch(() => 0),
-    prisma.review.count(),
-    prisma.review.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: { user: { select: { name: true } }, product: { select: { title: true } } },
-    }),
-    prisma.order.findMany({ where: { createdAt: { gte: monthAgo } }, select: { total: true } }),
-    prisma.product.findMany({ select: { category: true, price: true } }),
-    prisma.analytics.findMany({ where: { date: { gte: weekAgo.toISOString().slice(0, 10) } }, select: { date: true, ip: true, device: true } }),
-  ]);
+    const dateFilter = range === 'all' ? {} : { createdAt: { gte: rangeDate } };
+    const dateFilterAnalytics = range === 'all' ? {} : { date: { gte: rangeDate.toISOString().slice(0, 10) } };
 
-  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
-  const monthRevenue = monthOrders.reduce((sum, o) => sum + o.total, 0);
-  const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
-  const completedOrders = orders.filter(o => o.status === 'COMPLETED').length;
+    const [
+      totalUsers, totalProducts, allOrders, rangeOrders, rangeUsers,
+      topProductsRaw, totalCategories, rangeReviews, allReviews,
+      recentOrders, recentReviews, visitors, monthOrders, allProducts,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.product.count(),
+      prisma.order.findMany({ select: { total: true, createdAt: true, status: true } }),
+      prisma.order.findMany({ where: dateFilter, select: { total: true, createdAt: true, status: true, userId: true } }),
+      prisma.user.findMany({ where: dateFilter, select: { id: true, createdAt: true } }),
+      prisma.product.findMany({
+        take: 5,
+        orderBy: { reviewCount: 'desc' },
+        select: { title: true, category: true, price: true, reviewCount: true },
+      }),
+      prisma.category.count().catch(() => 0),
+      prisma.review.findMany({ where: dateFilter, select: { rating: true, createdAt: true } }),
+      prisma.review.findMany({ select: { rating: true } }),
+      prisma.order.findMany({
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { name: true, email: true } }, items: { include: { product: { select: { title: true } } } } },
+      }),
+      prisma.review.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { name: true } }, product: { select: { title: true } } },
+      }),
+      prisma.analytics.findMany({ where: dateFilterAnalytics, select: { date: true, ip: true, device: true, path: true } }),
+      prisma.order.findMany({ where: { createdAt: { gte: monthAgo } }, select: { total: true } }),
+      prisma.product.findMany({ select: { category: true, price: true } }),
+    ]);
 
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const salesByDay = Array(7).fill(0);
-  orders.forEach(o => {
-    const diff = Math.floor((now.getTime() - new Date(o.createdAt).getTime()) / 86400000);
-    if (diff < 7) salesByDay[6 - diff] += o.total;
-  });
+    // KPIs
+    const totalRevenue = rangeOrders.reduce((s, o) => s + o.total, 0);
+    const totalOrders = rangeOrders.length;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const completedOrders = rangeOrders.filter(o => o.status === 'COMPLETED').length;
+    const newUsersThisWeek = await prisma.user.count({ where: { createdAt: { gte: weekAgo } } });
 
-  const chartData = salesByDay.map((sales, i) => ({
-    name: days[(new Date().getDay() - 6 + i + 7) % 7],
-    sales: Math.round(sales),
-  }));
+    // Conversion rate: orders / unique visitors in range
+    const uniqueVisitors = new Set(visitors.map(v => v.ip)).size;
+    const conversionRate = uniqueVisitors > 0 ? (totalOrders / uniqueVisitors) * 100 : 0;
 
-  // Order status breakdown
-  const statusCounts: Record<string, number> = {};
-  orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
-  const orderStatusData = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
+    // Daily chart data
+    const days = range === 'all' ? 30 : parseInt(range);
+    const dailyRevenue: { date: string; revenue: number; orders: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      const dateStr = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+      let rev = 0, cnt = 0;
+      rangeOrders.forEach(o => {
+        if (new Date(o.createdAt).toISOString().slice(0, 10) === dateStr) { rev += o.total; cnt++; }
+      });
+      dailyRevenue.push({ date: label, revenue: Math.round(rev), orders: cnt });
+    }
 
-  // Monthly revenue trend (last 6 months)
-  const monthlyRevenue: { month: string; revenue: number; orders: number }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const label = d.toLocaleString('en', { month: 'short' });
-    const start = new Date(d.getFullYear(), d.getMonth(), 1);
-    const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
-    let rev = 0, cnt = 0;
-    orders.forEach(o => {
-      const t = new Date(o.createdAt);
-      if (t >= start && t < end) { rev += o.total; cnt++; }
+    // Order status breakdown
+    const statusCounts: Record<string, number> = {};
+    rangeOrders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
+    const orderStatusData = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
+
+    // Monthly revenue trend (last 6 months — always shown)
+    const monthlyRevenue: { month: string; revenue: number; orders: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleString('en', { month: 'short' });
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      let rev = 0, cnt = 0;
+      allOrders.forEach(o => {
+        const t = new Date(o.createdAt);
+        if (t >= start && t < end) { rev += o.total; cnt++; }
+      });
+      monthlyRevenue.push({ month: label, revenue: Math.round(rev), orders: cnt });
+    }
+
+    // Visitors by day
+    const visitorsByDay: { day: string; visitors: number; mobile: number; desktop: number }[] = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      const dateStr = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+      const dayV = visitors.filter(v => v.date === dateStr);
+      visitorsByDay.push({
+        day: label,
+        visitors: new Set(dayV.map(v => v.ip)).size,
+        mobile: dayV.filter(v => v.device === 'mobile').length,
+        desktop: dayV.filter(v => v.device === 'desktop').length,
+      });
+    }
+
+    // Category revenue breakdown
+    const catRevenue: Record<string, number> = {};
+    allProducts.forEach(p => { catRevenue[p.category] = (catRevenue[p.category] || 0) + p.price; });
+    const categoryData = Object.entries(catRevenue)
+      .map(([name, value]) => ({ name, value: Math.round(value) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+
+    // Top products by order count in range
+    const productOrderCount: Record<string, number> = {};
+    // We need order items for range — fetch separately
+    const rangeOrderIds = rangeOrders.map(o => {
+      // We don't have IDs from the select, so use allOrders approach
+      return null;
     });
-    monthlyRevenue.push({ month: label, revenue: Math.round(rev), orders: cnt });
-  }
 
-  // Daily visitors (last 7 days)
-  const visitorsByDay: { day: string; visitors: number; mobile: number; desktop: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86400000);
-    const dateStr = d.toISOString().slice(0, 10);
-    const label = d.toLocaleString('en', { weekday: 'short' });
-    const dayVisitors = visitors7d.filter(v => v.date === dateStr);
-    const uniqueIps = new Set(dayVisitors.map(v => v.ip)).size;
-    const mobile = dayVisitors.filter(v => v.device === 'mobile').length;
-    const desktop = dayVisitors.filter(v => v.device === 'desktop').length;
-    visitorsByDay.push({ day: label, visitors: uniqueIps, mobile, desktop });
-  }
+    // User analytics: new vs returning in range
+    const rangeUserIds = new Set(rangeOrders.map(o => o.userId));
+    const newBuyersInRange = rangeUsers.filter(u => rangeUserIds.has(u.id)).length;
+    const returningBuyers = rangeUserIds.size - Math.min(newBuyersInRange, rangeUserIds.size);
 
-  // Category revenue breakdown
-  const catRevenue: Record<string, number> = {};
-  allProducts.forEach(p => { catRevenue[p.category] = (catRevenue[p.category] || 0) + p.price; });
-  const categoryData = Object.entries(catRevenue)
-    .map(([name, value]) => ({ name, value: Math.round(value) }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6);
+    // Review analytics
+    const avgRating = rangeReviews.length > 0
+      ? rangeReviews.reduce((s, r) => s + r.rating, 0) / rangeReviews.length
+      : allReviews.length > 0
+        ? allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length
+        : 0;
 
-  return NextResponse.json({
-    totalUsers,
-    totalProducts,
-    totalOrders: orders.length,
-    totalRevenue: isAdmin ? totalRevenue : undefined,
-    monthRevenue: isAdmin ? monthRevenue : undefined,
-    avgOrderValue: isAdmin ? avgOrderValue : undefined,
-    completedOrders,
-    newUsersThisWeek,
-    totalCategories,
-    totalReviews,
-    chartData: isAdmin ? chartData : undefined,
-    recentOrders,
-    topProducts,
-    recentReviews,
-    orderStatusData,
-    monthlyRevenue: isAdmin ? monthlyRevenue : undefined,
-    visitorsByDay,
-    categoryData: isAdmin ? categoryData : undefined,
-  });
+    // Conversion funnel
+    const totalVisitors = uniqueVisitors;
+    const productViews = new Set(visitors.filter(v => v.path.startsWith('/products/')).map(v => v.ip)).size;
+    const purchasers = rangeUserIds.size;
+    const completedPurchasers = completedOrders;
+
+    const monthRevenue = monthOrders.reduce((s, o) => s + o.total, 0);
+
+    return NextResponse.json({
+      // Core KPIs
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      totalRevenue: isAdmin ? totalRevenue : undefined,
+      monthRevenue: isAdmin ? monthRevenue : undefined,
+      avgOrderValue: isAdmin ? avgOrderValue : undefined,
+      completedOrders,
+      newUsersThisWeek,
+      totalCategories,
+      conversionRate: isAdmin ? conversionRate : undefined,
+
+      // Charts
+      dailyRevenue: isAdmin ? dailyRevenue : undefined,
+      chartData: isAdmin ? dailyRevenue.map(d => ({ name: d.date, sales: d.revenue })) : undefined,
+      orderStatusData,
+      monthlyRevenue: isAdmin ? monthlyRevenue : undefined,
+      visitorsByDay,
+      categoryData: isAdmin ? categoryData : undefined,
+
+      // Tables
+      recentOrders,
+      topProducts: topProductsRaw,
+      recentReviews,
+
+      // Review analytics
+      totalReviews: rangeReviews.length,
+      avgRating: Math.round(avgRating * 10) / 10,
+
+      // User analytics
+      newUsersInRange: rangeUsers.length,
+      returningBuyers,
+      uniqueBuyers: rangeUserIds.size,
+
+      // Conversion funnel
+      funnel: isAdmin ? {
+        visitors: totalVisitors,
+        productViews,
+        purchasers,
+        completed: completedPurchasers,
+      } : undefined,
+    });
   } catch (err: any) {
     console.error('Stats error:', err);
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });

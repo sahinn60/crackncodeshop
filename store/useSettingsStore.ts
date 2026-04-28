@@ -19,6 +19,8 @@ export interface SiteSettings {
   footerLogoUrl?: string;
   footerDescription?: string;
   socialLinks: { twitter?: string; facebook?: string; instagram?: string };
+  whatsappNumber?: string;
+  youtubeChannel?: string;
 }
 
 interface SettingsState {

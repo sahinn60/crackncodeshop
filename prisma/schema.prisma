@@ -244,6 +244,8 @@ model Settings {
   footerLogoUrl     String  @default("")
   footerDescription String  @default("")
   logoShowcase      String  @default("{}")
+  whatsappNumber    String  @default("")
+  youtubeChannel    String  @default("")
 }
 
 model FlashSale {

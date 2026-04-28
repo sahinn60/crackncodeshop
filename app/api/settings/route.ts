@@ -18,6 +18,8 @@ function formatSettings(s: any) {
     footerLogoUrl: s.footerLogoUrl,
     footerDescription: s.footerDescription,
     socialLinks: { twitter: s.socialTwitter, facebook: s.socialFacebook, instagram: s.socialInstagram },
+    whatsappNumber: s.whatsappNumber,
+    youtubeChannel: s.youtubeChannel,
   };
 }
 
@@ -43,29 +45,36 @@ export async function PUT(req: NextRequest) {
   if (error) return error;
 
   const body = await req.json();
-  const updated = await prisma.settings.upsert({
-    where: { id: 'singleton' },
-    update: {
-      siteName: body.siteName,
-      logoUrl: body.logoUrl,
-      faviconUrl: body.faviconUrl,
-      heroBannerUrl: body.heroBannerUrl,
-      bannerImages: body.bannerImages ? JSON.stringify(body.bannerImages) : undefined,
-      facebookPixelId: body.facebookPixelId,
-      tiktokPixelId: body.tiktokPixelId,
-      tawktoScriptUrl: body.tawktoScriptUrl,
-      footerLogoUrl: body.footerLogoUrl,
-      footerDescription: body.footerDescription,
-      socialTwitter: body.socialLinks?.twitter,
-      socialFacebook: body.socialLinks?.facebook,
-      socialInstagram: body.socialLinks?.instagram,
-    },
-    create: { id: 'singleton' },
-  });
+  try {
+    const updated = await prisma.settings.upsert({
+      where: { id: 'singleton' },
+      update: {
+        siteName: body.siteName ?? undefined,
+        logoUrl: body.logoUrl ?? undefined,
+        faviconUrl: body.faviconUrl ?? undefined,
+        heroBannerUrl: body.heroBannerUrl ?? undefined,
+        bannerImages: body.bannerImages ? JSON.stringify(body.bannerImages) : undefined,
+        facebookPixelId: body.facebookPixelId ?? undefined,
+        tiktokPixelId: body.tiktokPixelId ?? undefined,
+        tawktoScriptUrl: body.tawktoScriptUrl ?? undefined,
+        footerLogoUrl: body.footerLogoUrl ?? undefined,
+        footerDescription: body.footerDescription ?? undefined,
+        socialTwitter: body.socialLinks?.twitter ?? undefined,
+        socialFacebook: body.socialLinks?.facebook ?? undefined,
+        socialInstagram: body.socialLinks?.instagram ?? undefined,
+        whatsappNumber: body.whatsappNumber ?? undefined,
+        youtubeChannel: body.youtubeChannel ?? undefined,
+      },
+      create: { id: 'singleton' },
+    });
 
   // Invalidate cache
   const data = formatSettings(updated);
   cache = { data, expiresAt: Date.now() + 60_000 };
 
-  return NextResponse.json(updated);
+    return NextResponse.json(data);
+  } catch (err: any) {
+    console.error('Settings PUT error:', err);
+    return NextResponse.json({ error: err.message || 'Failed to save' }, { status: 500 });
+  }
 }

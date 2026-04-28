@@ -212,6 +212,8 @@ export default function AdminSettingsPage() {
           <div>
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Customer Support</h3>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+              {field('WhatsApp Number', 'whatsappNumber', formData.whatsappNumber || '', '+8801XXXXXXXXX')}
+              {field('YouTube Channel URL', 'youtubeChannel', formData.youtubeChannel || '', 'https://youtube.com/@yourchannel')}
               <div className="sm:col-span-6">
                 <label className="block text-sm font-medium text-gray-700">Tawk.to Script URL</label>
                 <div className="mt-1">

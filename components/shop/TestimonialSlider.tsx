@@ -163,7 +163,7 @@ function MobileMarqueeStrip({ items, reverse = false }: { items: Testimonial[]; 
     <div className="relative overflow-hidden">
       <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
-      <div className={`flex ${reverse ? 'animate-testimonial-scroll-reverse' : 'animate-testimonial-scroll'}`}>
+      <div className={`flex ${reverse ? 'animate-testimonial-scroll-mobile-reverse' : 'animate-testimonial-scroll-mobile'}`}>
         {doubled.map((t, i) => (
           <div key={`${t.name}-${i}`} className="mx-2 flex-shrink-0 w-[260px]">
             <TestimonialCard t={t} />
