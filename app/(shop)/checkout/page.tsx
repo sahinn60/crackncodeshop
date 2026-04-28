@@ -359,7 +359,7 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8">
 
           {/* Main Panel */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-1">
             <AnimatePresence mode="wait">
 
               {/* STEP 0 — Cart Review */}
@@ -504,12 +504,14 @@ export default function CheckoutPage() {
             )}
 
             {/* Recommended Products */}
-            <RecommendedProducts />
+            <div className="hidden lg:block">
+              <RecommendedProducts />
+            </div>
           </div>
 
           {/* Order Summary Sidebar */}
           {step < 3 && (
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 order-2">
               <OrderSummary
                 coupon={appliedCoupon}
                 onApplyCoupon={handleApplyCoupon}
@@ -517,6 +519,11 @@ export default function CheckoutPage() {
               />
             </div>
           )}
+
+          {/* Recommended Products — mobile only, after order summary */}
+          <div className="lg:hidden order-3">
+            <RecommendedProducts />
+          </div>
         </div>
       </div>
     </div>
