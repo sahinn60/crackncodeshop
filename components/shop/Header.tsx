@@ -88,7 +88,7 @@ export function Header() {
           <div className="flex items-center gap-6 lg:gap-8">
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
               {settings?.logoUrl ? (
-                <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-8 w-auto max-w-[160px] object-contain" />
+                <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-10 sm:h-12 w-auto max-w-[200px] object-contain" />
               ) : (
                 <span className="text-xl sm:text-2xl font-black tracking-tight text-primary">{settings?.siteName || 'Shop'}</span>
               )}
