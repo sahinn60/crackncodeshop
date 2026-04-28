@@ -6,15 +6,16 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { ArrowRight, ChevronDown, Star, Users, Zap, Shield, ChevronLeft, ChevronRight as ChevronRightIcon, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { apiClient } from '@/lib/axios';
 import type { Product } from '@/components/shop/ProductCard';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { CategorySidebar } from '@/components/shop/CategorySidebar';
-import { PromoBanner } from '@/components/shop/PromoBanner';
-import { FlashSaleSection } from '@/components/shop/FlashSaleSection';
-import { LogoShowcase } from '@/components/shop/LogoShowcase';
-import { TestimonialSlider } from '@/components/shop/TestimonialSlider';
+
+const PromoBanner = lazy(() => import('@/components/shop/PromoBanner').then(m => ({ default: m.PromoBanner })));
+const FlashSaleSection = lazy(() => import('@/components/shop/FlashSaleSection').then(m => ({ default: m.FlashSaleSection })));
+const LogoShowcase = lazy(() => import('@/components/shop/LogoShowcase').then(m => ({ default: m.LogoShowcase })));
+const TestimonialSlider = lazy(() => import('@/components/shop/TestimonialSlider').then(m => ({ default: m.TestimonialSlider })));
 
 function SlideIn({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -192,17 +193,14 @@ export default function HomePage() {
 
   useEffect(() => {
     apiClient.get('/products', { params: { page: 1, limit: 4 } }).then(({ data }) => {
-      console.log('[Homepage] Trending products:', data.products?.length, data.products);
       setTrending(data.products.slice(0, 4));
-    }).catch((err) => console.error('[Homepage] Failed to fetch trending:', err));
+    }).catch(() => {});
     apiClient.get('/products/top-selling').then(({ data }) => {
-      console.log('[Homepage] Top sellers:', data?.length, data);
       setTopSellers(data);
-    }).catch((err) => console.error('[Homepage] Failed to fetch top-selling:', err));
+    }).catch(() => {});
     apiClient.get('/bundles').then(({ data }) => {
-      console.log('[Homepage] Bundles from admin:', data?.length, data);
       setBundles(data);
-    }).catch((err) => console.error('[Homepage] Failed to fetch bundles:', err));
+    }).catch(() => {});
   }, []);
 
   const slideVariants = {
@@ -251,6 +249,7 @@ export default function HomePage() {
                           src={banners[currentSlide].url}
                           alt={banners[currentSlide].alt}
                           className="w-full h-full object-cover"
+                          {...(currentSlide === 0 ? { fetchPriority: 'high' as any, loading: 'eager' } : { loading: 'lazy', decoding: 'async' })}
                         />
                       </Link>
                     ) : (
@@ -258,6 +257,7 @@ export default function HomePage() {
                         src={banners[currentSlide].url}
                         alt={banners[currentSlide].alt}
                         className="w-full h-full object-cover"
+                        {...(currentSlide === 0 ? { fetchPriority: 'high' as any, loading: 'eager' } : { loading: 'lazy', decoding: 'async' })}
                       />
                     )}
                   </motion.div>
@@ -316,7 +316,7 @@ export default function HomePage() {
               >
                 <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center group-hover:border-primary/30 transition-colors">
                   {cat.imageUrl ? (
-                    <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                    <img src={cat.imageUrl} alt={cat.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-lg sm:text-xl font-medium text-gray-300">{cat.name.charAt(0)}</span>
                   )}
@@ -329,13 +329,13 @@ export default function HomePage() {
       )}
 
       {/* Flash Sale */}
-      <FlashSaleSection />
+      <Suspense><FlashSaleSection /></Suspense>
 
       {/* Promo Coupon Banner */}
-      <PromoBanner />
+      <Suspense><PromoBanner /></Suspense>
 
       {/* Trusted By — Dynamic Logo Showcase */}
-      <LogoShowcase />
+      <Suspense><LogoShowcase /></Suspense>
 
       {/* Trending Resources */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-24">
@@ -487,7 +487,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <TestimonialSlider />
+      <Suspense><TestimonialSlider /></Suspense>
 
       {/* FAQ */}
       <section className="py-8 sm:py-24 container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">

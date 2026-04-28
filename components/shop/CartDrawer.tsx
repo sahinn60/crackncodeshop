@@ -2,18 +2,24 @@
 
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { X, Trash2, Plus, Minus, ShoppingBag, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Price } from '@/components/ui/Price';
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, clearCart, total, count } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Close cart on route change
+  useEffect(() => {
+    closeCart();
+  }, [pathname]);
 
 
   const handleCheckout = () => {

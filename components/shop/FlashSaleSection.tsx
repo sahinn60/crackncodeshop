@@ -95,7 +95,7 @@ export function FlashSaleSection() {
                     >
                       <div className="aspect-square relative overflow-hidden bg-gray-50">
                         <Link href={`/products/${product.id}`}>
-                          <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          <img src={product.imageUrl} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                         </Link>
                         {discountPct > 0 && (
                           <span className="absolute top-2 left-2 bg-gradient-to-r from-primary to-orange-500 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
@@ -147,7 +147,7 @@ export function FlashSaleSection() {
                       return (
                         <Link key={product.id} href={`/products/${product.id}`} className="group flex items-center gap-2.5 p-2 rounded-lg transition-colors" style={{ background: 'transparent' }} onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
                           <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                            <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
+                            <img src={product.imageUrl} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-[10px] sm:text-xs font-medium text-gray-700 line-clamp-1 group-hover:text-primary transition-colors">{product.title}</p>

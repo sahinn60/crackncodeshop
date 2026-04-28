@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import {
   Download, Package, User, Save, X, CheckCircle,
   ShoppingBag, CreditCard, CalendarDays, ExternalLink,
-  LogOut, ChevronRight, Clock, TrendingUp, Star, MessageSquare, Send, Edit3,
+  LogOut, ChevronRight, Clock, TrendingUp, Star, MessageSquare, Send, Edit3, Lock, Eye, EyeOff,
 } from 'lucide-react';
 import { apiClient } from '@/lib/axios';
 import { Suspense } from 'react';
@@ -156,6 +156,15 @@ function DashboardContent() {
   const [editComment, setEditComment] = useState('');
   const [editSaving, setEditSaving] = useState(false);
 
+  // Password change
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState('');
+  const [pwError, setPwError] = useState('');
+
   // Profile form
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
@@ -209,6 +218,24 @@ function DashboardContent() {
   };
 
   const handleLogout = () => { logout(); router.push('/'); };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(''); setPwSuccess('');
+    if (newPw.length < 6) { setPwError('New password must be at least 6 characters'); return; }
+    if (newPw !== confirmPw) { setPwError('Passwords do not match'); return; }
+    setPwSaving(true);
+    try {
+      const { data } = await apiClient.post('/auth/change-password', { currentPassword: currentPw, newPassword: newPw });
+      setPwSuccess(data.message);
+      setCurrentPw(''); setNewPw(''); setConfirmPw('');
+      setTimeout(() => setPwSuccess(''), 3000);
+    } catch (err: any) {
+      setPwError(err.response?.data?.error || 'Failed to change password');
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
   const memberSince = user ? new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
@@ -508,7 +535,7 @@ function DashboardContent() {
                 </div>
 
                 {/* Edit Form */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-4 sm:space-y-6">
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                       <h3 className="font-semibold text-dark flex items-center gap-2">
@@ -572,6 +599,59 @@ function DashboardContent() {
                             </span>
                           ) : (
                             <><Save className="h-4 w-4" /> Save Changes</>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* Change Password */}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                      <h3 className="font-semibold text-dark flex items-center gap-2">
+                        <Lock className="h-4 w-4 text-primary" /> Change Password
+                      </h3>
+                    </div>
+                    <form onSubmit={handleChangePassword} className="p-6 space-y-5">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Password</label>
+                        <div className="relative">
+                          <input type={showPw ? 'text' : 'password'} required value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+                            placeholder="Enter current password" className={`${inputCls} pr-11`} />
+                          <button type="button" onClick={() => setShowPw(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">New Password</label>
+                        <input type={showPw ? 'text' : 'password'} required value={newPw} onChange={e => setNewPw(e.target.value)}
+                          placeholder="At least 6 characters" className={inputCls} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirm New Password</label>
+                        <input type={showPw ? 'text' : 'password'} required value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+                          placeholder="Re-enter new password" className={inputCls} />
+                      </div>
+                      {pwError && (
+                        <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                          <X className="h-4 w-4 flex-shrink-0" /> {pwError}
+                        </div>
+                      )}
+                      {pwSuccess && (
+                        <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                          <CheckCircle className="h-4 w-4 flex-shrink-0" /> {pwSuccess}
+                        </div>
+                      )}
+                      <div className="flex justify-end pt-2">
+                        <Button type="submit" disabled={pwSaving} className="bg-primary hover:bg-[#E62828] text-white px-8 gap-2 h-11 font-semibold shadow-lg shadow-primary/20">
+                          {pwSaving ? (
+                            <span className="flex items-center gap-2">
+                              <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                              Changing...
+                            </span>
+                          ) : (
+                            <><Lock className="h-4 w-4" /> Change Password</>
                           )}
                         </Button>
                       </div>

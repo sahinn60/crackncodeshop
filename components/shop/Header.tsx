@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -84,15 +84,17 @@ export function Header() {
     router.push('/');
   };
 
-  const Logo = () => (
-    <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-      {settings?.logoUrl ? (
-        <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-8 md:h-12 w-auto max-w-[140px] md:max-w-[200px] object-contain" />
-      ) : (
-        <span className="text-lg md:text-2xl font-black tracking-tight text-primary">{settings?.siteName || 'Shop'}</span>
-      )}
-    </Link>
-  );
+  const Logo = memo(function Logo() {
+    return (
+      <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+        {settings?.logoUrl ? (
+          <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-8 md:h-12 w-auto max-w-[140px] md:max-w-[200px] object-contain" />
+        ) : (
+          <span className="text-lg md:text-2xl font-black tracking-tight text-primary">{settings?.siteName || 'Shop'}</span>
+        )}
+      </Link>
+    );
+  });
 
   return (
     <>

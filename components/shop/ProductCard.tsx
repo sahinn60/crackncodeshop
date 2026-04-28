@@ -43,7 +43,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="group flex flex-col rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden h-full relative">
         <div className="aspect-square overflow-hidden relative bg-gray-100">
           <Link href={`/products/${product.id}`} className="block w-full h-full">
-            <img src={product.imageUrl} alt={product.title} className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
+            <img src={product.imageUrl} alt={product.title} loading="lazy" decoding="async" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
           </Link>
 
           {/* Top-left badges */}

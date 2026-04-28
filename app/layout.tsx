@@ -8,19 +8,25 @@ import { SplashScreen } from "@/components/providers/SplashScreen";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: true,
 });
 
 const openSans = Open_Sans({
   variable: "--font-opensans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "600"],
+  display: "swap",
+  preload: false,
 });
 
 const hindSiliguri = Hind_Siliguri({
   variable: "--font-hind-siliguri",
-  subsets: ["bengali", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["bengali"],
+  weight: ["400", "500"],
+  display: "swap",
+  preload: false,
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncode.shop';

@@ -79,9 +79,6 @@ export function MobileBottomNav() {
                   <Settings className="h-4 w-4 text-gray-400" /> Admin Panel
                 </Link>
               )}
-              <button onClick={handleLogout} className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg">
-                <LogOut className="h-4 w-4" /> Sign out
-              </button>
             </div>
           </motion.div>
         )}
@@ -89,7 +86,7 @@ export function MobileBottomNav() {
 
       {/* Backdrop */}
       <AnimatePresence>
-        {accountOpen && (
+        {accountOpen && isAuthenticated && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

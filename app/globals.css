@@ -269,6 +269,8 @@ p, span, a, li, td, th, label, input, textarea, select, button {
   min-width: 200%;
   justify-content: flex-start;
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 @media (min-width: 640px) {
   .ls-scroll-track { gap: 28px; }
@@ -458,7 +460,8 @@ p, span, a, li, td, th, label, input, textarea, select, button {
 
 .ann-bar__ticker {
   display: flex; flex-shrink: 0; align-items: center;
-  animation: ann-scroll var(--ticker-duration, 47s) linear infinite; will-change: transform;
+  animation: ann-scroll var(--ticker-duration, 47s) linear infinite;
+  will-change: transform; backface-visibility: hidden; -webkit-backface-visibility: hidden;
 }
 
 .ann-bar__fade {

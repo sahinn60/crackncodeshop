@@ -1,0 +1,8 @@
+[2026-04-28T16:16:17.336Z] === SERVER STARTING ===
+[2026-04-28T16:16:17.338Z] Node v25.9.0 | PORT=3000 | CWD=c:\Users\pc\Downloads\Crackncode.shop
+[2026-04-28T16:16:17.339Z] .next folder found, starting Next.js...
+[2026-04-28T16:16:17.576Z] Listening on 0.0.0.0:3000
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+[2026-04-28T16:16:17.690Z] Next.js READY
+(node:19040) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
