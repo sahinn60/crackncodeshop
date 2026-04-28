@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   if (error) return error;
 
   const { orderItemId, productId } = await req.json();
+  const origin = req.headers.get('origin') || req.nextUrl.origin;
 
   // Route 1: Download via purchase (orderItemId)
   if (orderItemId) {
@@ -45,9 +46,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return NextResponse.json({
-      downloadUrl: `${baseUrl}/api/download?token=${dl.token}`,
+      downloadUrl: `${origin}/api/download?token=${dl.token}`,
       expiresAt: dl.expiresAt,
       remainingDownloads: limit - (totalDownloads._sum.usedCount || 0),
     });
@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
 
     if (!product || !product.fileUrl) return NextResponse.json({ error: 'File not available' }, { status: 404 });
 
-    // Check download limit for granted access
     const totalDownloads = await prisma.downloadToken.aggregate({
       where: { productId, userId: user!.id },
       _sum: { usedCount: true },
@@ -78,7 +77,6 @@ export async function POST(req: NextRequest) {
     if ((totalDownloads._sum.usedCount || 0) >= limit)
       return NextResponse.json({ error: `Download limit reached (${limit}). Contact support.` }, { status: 429 });
 
-    // Create a dummy orderItem reference — use the first orderItem for this product if exists, or create token without it
     const existingOrderItem = await prisma.orderItem.findFirst({
       where: { productId, order: { userId: user!.id } },
       select: { id: true },
@@ -96,9 +94,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return NextResponse.json({
-      downloadUrl: `${baseUrl}/api/download?token=${dl.token}`,
+      downloadUrl: `${origin}/api/download?token=${dl.token}`,
       expiresAt: dl.expiresAt,
       remainingDownloads: limit - (totalDownloads._sum.usedCount || 0),
     });

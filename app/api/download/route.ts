@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getAuthUser } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token');
@@ -15,10 +14,8 @@ export async function GET(req: NextRequest) {
 
   if (!dl) return NextResponse.json({ error: 'Invalid download link' }, { status: 404 });
 
-  // Check user auth
-  const user = getAuthUser(req);
-  if (!user || user.id !== dl.userId)
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Check user auth — skip if token is valid (token is already user-scoped)
+  // Auth header won't be present when browser opens URL in new tab
 
   // Check expiry
   if (new Date() > dl.expiresAt)
