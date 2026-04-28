@@ -285,37 +285,29 @@ export default function HomePage() {
       {/* Promo Coupon Banner */}
       <PromoBanner />
 
-      {/* Trusted By — Double Strip Marquee */}
-      <section className="py-8 sm:py-12 bg-dark overflow-hidden my-4 sm:my-8">
-        <div className="container mx-auto px-4 mb-6 sm:mb-8">
+      {/* Trusted By — Double Strip Marquee with partner images */}
+      <section className="py-6 sm:py-10 bg-dark overflow-hidden my-4 sm:my-8">
+        <div className="container mx-auto px-4 mb-5 sm:mb-8">
           <p className="text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-widest">Trusted by innovative teams worldwide</p>
         </div>
-        <div className="space-y-4">
-          {/* Strip 1 — left to right */}
+        <div className="space-y-3">
+          {/* Strip 1 — left to right (desktop image) */}
           <div className="relative flex overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-dark to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-dark to-transparent z-10 pointer-events-none" />
-            <div className="flex animate-marquee whitespace-nowrap items-center w-[200%]">
-              {[...Array(2)].map((_, idx) => (
-                <div key={idx} className="flex gap-6 sm:gap-10 px-3 sm:px-5 items-center min-w-full justify-around">
-                  {['Next.js', 'React', 'Tailwind CSS', 'TypeScript', 'Prisma', 'PostgreSQL', 'Node.js', 'Stripe', 'Cloudinary', 'Vercel'].map(t => (
-                    <span key={t} className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/10 bg-white/[0.04] text-white/50 text-xs sm:text-sm font-medium whitespace-nowrap">{t}</span>
-                  ))}
-                </div>
+            <div className="flex animate-marquee items-center w-[200%]">
+              {[...Array(2)].map((_, i) => (
+                <img key={i} src="/Footer-Desktop-Dark-Version.png" alt="Partners" className="h-10 sm:h-14 w-auto min-w-full object-contain" />
               ))}
             </div>
           </div>
-          {/* Strip 2 — right to left (reverse) */}
+          {/* Strip 2 — right to left (light version, inverted) */}
           <div className="relative flex overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-dark to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-dark to-transparent z-10 pointer-events-none" />
-            <div className="flex animate-marquee-reverse whitespace-nowrap items-center w-[200%]">
-              {[...Array(2)].map((_, idx) => (
-                <div key={idx} className="flex gap-6 sm:gap-10 px-3 sm:px-5 items-center min-w-full justify-around">
-                  {['bKash', 'Nagad', 'EPS', 'Figma', 'Framer', 'Zustand', 'Recharts', 'Lucide', 'Axios', 'JWT'].map(t => (
-                    <span key={t} className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full border border-white/10 bg-white/[0.04] text-white/50 text-xs sm:text-sm font-medium whitespace-nowrap">{t}</span>
-                  ))}
-                </div>
+            <div className="flex animate-marquee-reverse items-center w-[200%]">
+              {[...Array(2)].map((_, i) => (
+                <img key={i} src="/Footer-Desktop-Light-Version.png" alt="Partners" className="h-10 sm:h-14 w-auto min-w-full object-contain brightness-0 invert opacity-40" />
               ))}
             </div>
           </div>
