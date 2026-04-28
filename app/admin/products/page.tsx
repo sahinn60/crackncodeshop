@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/lib/axios';
 import { Button } from '@/components/ui/Button';
-import { Plus, Trash2, X, Pencil } from 'lucide-react';
+import { Plus, Trash2, X, Pencil, Upload, FileText, Link2 } from 'lucide-react';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { Price } from '@/components/ui/Price';
 
@@ -11,6 +11,170 @@ interface Product { id: string; title: string; description: string; longDescript
 interface Category { id: string; name: string; children: Category[] }
 
 const emptyForm = { title: '', description: '', longDescription: '', price: '', oldPrice: '', imageUrl: '', fileUrl: '', category: '', features: '', format: '', rating: '', reviewCount: '', isTopSelling: false, isBundle: false, isPublished: true, youtubeUrl: '' };
+
+const ALLOWED_TYPES = [
+  'application/pdf', 'application/zip', 'application/x-zip-compressed',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/x-rar-compressed', 'application/x-7z-compressed',
+  'text/csv', 'text/plain',
+];
+
+const FILE_EXTENSIONS: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'application/zip': 'ZIP',
+  'application/x-zip-compressed': 'ZIP',
+  'application/vnd.ms-excel': 'XLS',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PPTX',
+  'application/msword': 'DOC',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'application/x-rar-compressed': 'RAR',
+  'application/x-7z-compressed': '7Z',
+  'text/csv': 'CSV',
+};
+
+function FileUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState('');
+  const [mode, setMode] = useState<'upload' | 'url'>(value && !value.includes('cloudinary') ? 'url' : 'upload');
+  const [urlInput, setUrlInput] = useState(value && !value.includes('cloudinary') ? value : '');
+
+  const handleUpload = (file: File) => {
+    if (file.size > 100 * 1024 * 1024) { setError('File too large. Max 100MB.'); return; }
+
+    setUploading(true);
+    setProgress(0);
+    setError('');
+
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dxhezbur2';
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'crackncode_unsigned');
+    formData.append('folder', 'crackncode/files');
+    formData.append('resource_type', 'raw');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
+    };
+
+    xhr.onload = () => {
+      setUploading(false);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          onChange(data.secure_url);
+        } catch { setError('Failed to parse upload response.'); }
+      } else {
+        try {
+          const err = JSON.parse(xhr.responseText);
+          setError(err?.error?.message || `Upload failed (${xhr.status})`);
+        } catch { setError(`Upload failed (${xhr.status})`); }
+      }
+    };
+
+    xhr.onerror = () => { setUploading(false); setError('Network error.'); };
+    xhr.send(formData);
+  };
+
+  const fileName = value ? value.split('/').pop()?.split('?')[0] || 'file' : '';
+  const fileExt = fileName.split('.').pop()?.toUpperCase() || '';
+
+  return (
+    <div className="space-y-2">
+      {/* Mode toggle */}
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5 w-fit">
+        <button type="button" onClick={() => setMode('upload')} className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${mode === 'upload' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+          <Upload className="h-3 w-3 inline mr-1" />Upload File
+        </button>
+        <button type="button" onClick={() => setMode('url')} className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${mode === 'url' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+          <Link2 className="h-3 w-3 inline mr-1" />Paste URL
+        </button>
+      </div>
+
+      {mode === 'upload' ? (
+        <>
+          {value ? (
+            <div className="flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                <FileText className="h-5 w-5 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-green-800 truncate">{fileName}</p>
+                <p className="text-xs text-green-600">{fileExt} file uploaded ✓</p>
+              </div>
+              <div className="flex gap-1.5 flex-shrink-0">
+                <button type="button" onClick={() => inputRef.current?.click()} className="px-2 py-1 text-xs bg-white border border-green-200 rounded text-green-700 hover:bg-green-50">Replace</button>
+                <button type="button" onClick={() => onChange('')} className="px-2 py-1 text-xs bg-white border border-red-200 rounded text-red-600 hover:bg-red-50">Remove</button>
+              </div>
+            </div>
+          ) : (
+            <div
+              onClick={() => !uploading && inputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${uploading ? 'border-indigo-300 bg-indigo-50/50' : 'border-gray-200 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30'}`}
+            >
+              {uploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-6 w-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-gray-600">Uploading... {progress}%</p>
+                  <div className="w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1.5">
+                  <Upload className="h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-500">Click to upload file</p>
+                  <p className="text-xs text-gray-400">PDF, ZIP, Excel, Word, PPT, RAR up to 100MB</p>
+                </div>
+              )}
+            </div>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".pdf,.zip,.rar,.7z,.xlsx,.xls,.csv,.doc,.docx,.ppt,.pptx,.txt"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = ''; }}
+            className="hidden"
+          />
+        </>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={e => setUrlInput(e.target.value)}
+              placeholder="https://drive.google.com/... or any direct link"
+              className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => { if (urlInput.trim()) { onChange(urlInput.trim()); } }}
+              className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >Set</button>
+          </div>
+          {value && mode === 'url' && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-green-600 text-xs">✓ URL set</span>
+              <a href={value} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline ml-auto">Test link →</a>
+              <button type="button" onClick={() => { onChange(''); setUrlInput(''); }} className="text-xs text-red-500 hover:underline">Remove</button>
+            </div>
+          )}
+          <p className="text-xs text-gray-400">Paste Google Drive, Dropbox, or any direct download URL</p>
+        </div>
+      )}
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -112,21 +276,11 @@ export default function AdminProductsPage() {
                 previewClass="h-40 w-full rounded-xl"
               />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">📁 Download File URL</label>
-                <input
-                  type="text"
+                <label className="block text-sm font-medium text-gray-700 mb-2">📁 Product File (downloadable)</label>
+                <FileUpload
                   value={form.fileUrl}
-                  onChange={e => setForm(p => ({ ...p, fileUrl: e.target.value }))}
-                  placeholder="Google Drive link, direct URL, or any file link"
-                  className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  onChange={url => setForm(p => ({ ...p, fileUrl: url }))}
                 />
-                <p className="mt-1 text-xs text-gray-400">Paste the direct download link (Google Drive, Dropbox, S3, or any URL). This is the file users will download after purchase.</p>
-                {form.fileUrl && (
-                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="text-green-600 text-xs">✓ File URL set</span>
-                    <a href={form.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline ml-auto">Preview link →</a>
-                  </div>
-                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
