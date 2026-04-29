@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin, requireAdminOrSubAdmin } from '@/lib/auth';
+import { requireAdmin, requireAdminOrSubAdmin, getAuthUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = requireAdminOrSubAdmin(req, 'products');
+  const { error, user } = requireAdminOrSubAdmin(req, 'products');
   if (error) return error;
 
   try {
@@ -53,25 +53,40 @@ export async function POST(req: NextRequest) {
     if (!data.title || !data.price)
       return NextResponse.json({ error: 'title and price are required' }, { status: 400 });
 
+    const price = parseFloat(data.price);
+    const oldPrice = data.oldPrice ? parseFloat(data.oldPrice) : null;
+    const rating = Math.min(5, Math.max(0, parseFloat(data.rating) || 0));
+    const reviewCount = Math.min(999999, Math.max(0, parseInt(data.reviewCount) || 0));
+
+    if (isNaN(price) || price < 0 || price > 9999999)
+      return NextResponse.json({ error: 'Price must be between 0 and 9,999,999' }, { status: 400 });
+    if (oldPrice !== null && (isNaN(oldPrice) || oldPrice < 0 || oldPrice > 9999999))
+      return NextResponse.json({ error: 'Old price must be between 0 and 9,999,999' }, { status: 400 });
+
+    // Get author info
+    const author = await prisma.user.findUnique({ where: { id: user!.id }, select: { id: true, name: true } });
+
     const product = await prisma.product.create({
       data: {
-        title: String(data.title).trim(),
-        description: String(data.description || '').trim(),
-        longDescription: String(data.longDescription || '').trim(),
-        price: parseFloat(data.price),
-        oldPrice: data.oldPrice ? parseFloat(data.oldPrice) : null,
-        imageUrl: String(data.imageUrl || '').trim(),
-        category: String(data.category || '').trim(),
-        rating: parseFloat(data.rating) || 0,
-        reviewCount: parseInt(data.reviewCount) || 0,
-        features: JSON.stringify(Array.isArray(data.features) ? data.features : []),
+        title: String(data.title).trim().slice(0, 200),
+        description: String(data.description || '').trim().slice(0, 1000),
+        longDescription: String(data.longDescription || '').trim().slice(0, 10000),
+        price,
+        oldPrice,
+        imageUrl: String(data.imageUrl || '').trim().slice(0, 500),
+        category: String(data.category || '').trim().slice(0, 100),
+        rating,
+        reviewCount,
+        features: JSON.stringify(Array.isArray(data.features) ? data.features.slice(0, 50) : []),
         lastUpdated: data.lastUpdated || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        format: String(data.format || '').trim(),
+        format: String(data.format || '').trim().slice(0, 50),
         isTopSelling: data.isTopSelling ?? false,
         isBundle: data.isBundle ?? false,
         isPublished: data.isPublished ?? true,
-        youtubeUrl: String(data.youtubeUrl || '').trim(),
-        fileUrl: String(data.fileUrl || '').trim(),
+        youtubeUrl: String(data.youtubeUrl || '').trim().slice(0, 500),
+        fileUrl: String(data.fileUrl || '').trim().slice(0, 500),
+        authorId: user!.id,
+        authorName: author?.name || 'Unknown',
       },
     });
     return NextResponse.json(product, { status: 201 });

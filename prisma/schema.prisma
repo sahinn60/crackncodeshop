@@ -47,6 +47,8 @@ model Product {
   isTopSelling    Boolean         @default(false)
   isBundle        Boolean         @default(false)
   youtubeUrl      String          @default("")
+  authorId        String          @default("")
+  authorName      String          @default("")
   createdAt       DateTime        @default(now())
   orderItems      OrderItem[]
   downloadTokens  DownloadToken[]

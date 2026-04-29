@@ -15,6 +15,11 @@ import Link from 'next/link';
 import { formatPrice } from '@/lib/currency';
 import { Price } from '@/components/ui/Price';
 
+interface LeaderboardEntry {
+  rank: number; authorId: string; authorName: string;
+  totalProducts: number; weeklyProducts: number; isCurrentUser: boolean;
+}
+
 interface Stats {
   totalUsers: number;
   totalProducts: number;
@@ -50,10 +55,16 @@ const tooltipStyle = { borderRadius: '8px', border: 'none', boxShadow: '0 4px 6p
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [myStats, setMyStats] = useState<LeaderboardEntry | null>(null);
   const isAdmin = useAuthStore(s => s.user?.role) === 'ADMIN';
 
   useEffect(() => {
     apiClient.get('/admin/stats').then(({ data }) => setStats(data)).catch(() => {});
+    apiClient.get('/admin/leaderboard').then(({ data }) => {
+      setLeaderboard(data.leaderboard || []);
+      setMyStats(data.myStats || null);
+    }).catch(() => {});
   }, []);
 
   const cards = stats ? [
@@ -342,6 +353,45 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500 line-clamp-1">{r.comment}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard */}
+      {leaderboard.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              🏆 Upload Leaderboard
+            </h3>
+          </div>
+          {!isAdmin && myStats && (
+            <div className="px-5 py-3 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-bold text-indigo-600">#{myStats.rank}</span>
+                <div>
+                  <p className="text-sm font-semibold text-indigo-900">Your Position</p>
+                  <p className="text-xs text-indigo-600">{myStats.totalProducts} total · {myStats.weeklyProducts} this week</p>
+                </div>
+              </div>
+              {myStats.rank === 1 && <span className="text-lg">👑</span>}
+            </div>
+          )}
+          <div className="divide-y divide-gray-50">
+            {leaderboard.slice(0, 10).map(entry => (
+              <div key={entry.authorId} className={`flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition-colors ${entry.isCurrentUser ? 'bg-indigo-50/50' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-bold w-6 text-center ${entry.rank <= 3 ? 'text-amber-500' : 'text-gray-400'}`}>
+                    {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{entry.authorName} {entry.isCurrentUser ? '(You)' : ''}</p>
+                    <p className="text-xs text-gray-400">{entry.weeklyProducts} this week</p>
+                  </div>
+                </div>
+                <span className="text-sm font-semibold text-gray-700">{entry.totalProducts} products</span>
               </div>
             ))}
           </div>

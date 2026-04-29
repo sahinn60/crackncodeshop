@@ -8,6 +8,11 @@ export async function POST(req: NextRequest) {
     const { error, user } = requireAuth(req);
     if (error) return error;
 
+    // Staff cannot change their own password — only admin can
+    if (user!.role === 'SUB_ADMIN') {
+      return NextResponse.json({ error: 'Staff members cannot change passwords. Contact your admin.' }, { status: 403 });
+    }
+
     const { currentPassword, newPassword } = await req.json();
     if (!currentPassword || !newPassword) {
       return NextResponse.json({ error: 'Current and new password are required' }, { status: 400 });

@@ -37,18 +37,25 @@ const FILE_EXTENSIONS: Record<string, string> = {
 
 function FileUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'upload' | 'url'>(value && !value.includes('cloudinary') ? 'url' : 'upload');
   const [urlInput, setUrlInput] = useState(value && !value.includes('cloudinary') ? value : '');
 
+  const cancelUpload = () => {
+    if (xhrRef.current) { xhrRef.current.abort(); xhrRef.current = null; }
+    setUploading(false); setProgress(0); setError('Upload cancelled.');
+  };
+
   const handleUpload = (file: File) => {
     if (file.size > 100 * 1024 * 1024) { setError('File too large. Max 100MB.'); return; }
+    if (!ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(pdf|zip|rar|7z|xlsx?|csv|docx?|pptx?|txt)$/i)) {
+      setError('Invalid file type. Allowed: PDF, ZIP, RAR, Excel, Word, PPT.'); return;
+    }
 
-    setUploading(true);
-    setProgress(0);
-    setError('');
+    setUploading(true); setProgress(0); setError('');
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dxhezbur2';
     const formData = new FormData();
@@ -58,28 +65,19 @@ function FileUpload({ value, onChange }: { value: string; onChange: (url: string
     formData.append('resource_type', 'raw');
 
     const xhr = new XMLHttpRequest();
+    xhrRef.current = xhr;
     xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`);
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
-    };
-
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100)); };
     xhr.onload = () => {
-      setUploading(false);
+      xhrRef.current = null; setUploading(false);
       if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          onChange(data.secure_url);
-        } catch { setError('Failed to parse upload response.'); }
+        try { onChange(JSON.parse(xhr.responseText).secure_url); } catch { setError('Failed to parse upload response.'); }
       } else {
-        try {
-          const err = JSON.parse(xhr.responseText);
-          setError(err?.error?.message || `Upload failed (${xhr.status})`);
-        } catch { setError(`Upload failed (${xhr.status})`); }
+        try { setError(JSON.parse(xhr.responseText)?.error?.message || `Upload failed (${xhr.status})`); } catch { setError(`Upload failed (${xhr.status})`); }
       }
     };
-
-    xhr.onerror = () => { setUploading(false); setError('Network error.'); };
+    xhr.onerror = () => { xhrRef.current = null; setUploading(false); setError('Network error.'); };
+    xhr.onabort = () => { xhrRef.current = null; setUploading(false); };
     xhr.send(formData);
   };
 
@@ -126,6 +124,9 @@ function FileUpload({ value, onChange }: { value: string; onChange: (url: string
                   <div className="w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                     <div className="h-full bg-indigo-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
                   </div>
+                  <button type="button" onClick={cancelUpload} className="mt-1 px-3 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                    ✕ Cancel Upload
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1.5">
@@ -266,17 +267,17 @@ export default function AdminProductsPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">{editingId ? 'Edit Product' : 'Add New Product'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               {([
-                { label: 'Title', key: 'title', type: 'text' },
-                { label: 'Price (৳)', key: 'price', type: 'number' },
-                { label: 'Old Price (৳) — leave empty if no discount', key: 'oldPrice', type: 'number' },
-                { label: 'Rating (0-5)', key: 'rating', type: 'number' },
-                { label: 'Review Count', key: 'reviewCount', type: 'number' },
-                { label: 'Format', key: 'format', type: 'text' },
-                { label: 'YouTube URL (optional)', key: 'youtubeUrl', type: 'text' },
+                { label: 'Title', key: 'title', type: 'text', max: undefined },
+                { label: 'Price (৳)', key: 'price', type: 'number', max: '9999999' },
+                { label: 'Old Price (৳) — leave empty if no discount', key: 'oldPrice', type: 'number', max: '9999999' },
+                { label: 'Rating (0-5)', key: 'rating', type: 'number', max: '5' },
+                { label: 'Review Count', key: 'reviewCount', type: 'number', max: '999999' },
+                { label: 'Format', key: 'format', type: 'text', max: undefined },
+                { label: 'YouTube URL (optional)', key: 'youtubeUrl', type: 'text', max: undefined },
               ] as const).map(f => (
                 <div key={f.key}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                  <input type={f.type} required={f.key === 'title' || f.key === 'price'} value={form[f.key] as string} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
+                  <input type={f.type} required={f.key === 'title' || f.key === 'price'} max={f.max} min={f.type === 'number' ? '0' : undefined} step={f.key === 'rating' ? '0.1' : f.key === 'price' || f.key === 'oldPrice' ? '0.01' : '1'} value={form[f.key] as string} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
                 </div>
               ))}
               <ImageUpload
@@ -350,19 +351,20 @@ export default function AdminProductsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Title', 'Category', 'Price', 'Flags', 'Created', 'Actions'].map(h => (
+              {['Title', 'Author', 'Category', 'Price', 'Flags', 'Created', 'Actions'].map(h => (
                 <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
+              <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
             ) : products.length === 0 ? (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No products yet. Add your first product!</td></tr>
+              <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No products yet. Add your first product!</td></tr>
             ) : products.map(p => (
               <tr key={p.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.title}</td>
+                <td className="px-6 py-4 text-xs text-gray-500">{(p as any).authorName || '—'}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div><Price amount={p.price} /></div>
