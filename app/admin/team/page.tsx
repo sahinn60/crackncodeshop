@@ -44,8 +44,13 @@ export default function AdminTeamPage() {
   const [copied, setCopied] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [staffStats, setStaffStats] = useState<any[]>([]);
+
   const load = () => apiClient.get('/admin/team').then(({ data }) => setMembers(data)).catch(() => {}).finally(() => setLoading(false));
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    apiClient.get('/admin/staff-monitor').then(({ data }) => setStaffStats(data)).catch(() => {});
+  }, []);
 
   const togglePerm = (key: string) => {
     setForm(p => ({
@@ -321,6 +326,39 @@ export default function AdminTeamPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Staff Activity Monitor */}
+      {staffStats.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <h3 className="text-sm font-semibold text-gray-900">📊 Staff Activity Monitor</h3>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {staffStats.map((s: any) => (
+              <div key={s.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{s.name}</p>
+                  <p className="text-xs text-gray-400">{s.email}</p>
+                </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="text-center">
+                    <p className="font-bold text-indigo-600">{s.weeklyProducts}</p>
+                    <p className="text-gray-400">This week</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-bold text-gray-700">{s.totalProducts}</p>
+                    <p className="text-gray-400">Total</p>
+                  </div>
+                  <div className="text-center min-w-[80px]">
+                    <p className="font-medium text-gray-600">{s.lastLoginAt ? new Date(s.lastLoginAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Never'}</p>
+                    <p className="text-gray-400">Last login</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

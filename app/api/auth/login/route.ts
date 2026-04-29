@@ -22,13 +22,12 @@ export async function POST(req: NextRequest) {
   const accessToken = signAccessToken({ id: user.id, role: user.role, permissions });
   const refreshToken = signRefreshToken();
 
-  await prisma.refreshToken.create({
-    data: {
-      userId: user.id,
-      token: refreshToken,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-    },
-  });
+  await Promise.all([
+    prisma.refreshToken.create({
+      data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+    }),
+    prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }),
+  ]);
 
   return NextResponse.json({
     user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl, bio: user.bio, permissions },

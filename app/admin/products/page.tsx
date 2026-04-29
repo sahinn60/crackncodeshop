@@ -185,10 +185,20 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [authorFilter, setAuthorFilter] = useState('');
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  const load = () => apiClient.get('/admin/products').then(({ data }) => setProducts(data)).finally(() => setIsLoading(false));
+  const load = () => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (authorFilter) params.set('author', authorFilter);
+    if (sortBy) params.set('sort', sortBy);
+    apiClient.get(`/admin/products?${params}`).then(({ data }) => setProducts(data)).finally(() => setIsLoading(false));
+  };
   useEffect(() => {
     load();
     apiClient.get('/categories').then(({ data }) => setCategories(data)).catch(() => {});
@@ -347,6 +357,26 @@ export default function AdminProductsPage() {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <input
+          type="text" placeholder="Search products..." value={search}
+          onChange={e => { setSearch(e.target.value); setTimeout(load, 300); }}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white w-48"
+        />
+        <select value={sortBy} onChange={e => { setSortBy(e.target.value); setTimeout(load, 100); }}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none bg-white">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="price-high">Price: High→Low</option>
+          <option value="price-low">Price: Low→High</option>
+          <option value="popular">Most Popular</option>
+        </select>
+        {authorFilter && (
+          <button onClick={() => { setAuthorFilter(''); setTimeout(load, 100); }} className="text-xs text-indigo-600 hover:underline">Clear author filter</button>
+        )}
+      </div>
+
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -364,7 +394,7 @@ export default function AdminProductsPage() {
             ) : products.map(p => (
               <tr key={p.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.title}</td>
-                <td className="px-6 py-4 text-xs text-gray-500">{(p as any).authorName || '—'}</td>
+                <td className="px-6 py-4 text-xs text-gray-500"><button onClick={() => { setAuthorFilter((p as any).authorId || ''); setTimeout(load, 100); }} className="hover:text-indigo-600 hover:underline">{(p as any).authorName || '—'}</button></td>
                 <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div><Price amount={p.price} /></div>

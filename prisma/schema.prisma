@@ -16,6 +16,8 @@ model User {
   credentialKey  String?        @unique          // unique login key for sub-admins
   avatarUrl      String         @default("")
   bio            String         @default("")
+  lastLoginAt    DateTime?
+  totalLoginTime Int            @default(0) // minutes
   createdAt      DateTime       @default(now())
   orders         Order[]
   refreshTokens  RefreshToken[]
