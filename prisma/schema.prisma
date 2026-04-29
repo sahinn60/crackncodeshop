@@ -219,6 +219,12 @@ model Coupon {
   priority  Int      @default(0)
   startDate DateTime @default(now())
   endDate   DateTime?
+  emoji     String   @default("🔥")
+  barColor  String   @default("#DC2626")
+  textColor String   @default("#FFFFFF")
+  showTimer Boolean  @default(true)
+  speedDesktop Int    @default(47)
+  speedMobile  Int    @default(70)
   createdAt DateTime @default(now())
 
   @@index([isActive])

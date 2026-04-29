@@ -28,6 +28,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.priority !== undefined && { priority: parseInt(body.priority) || 0 }),
         ...(body.startDate !== undefined && { startDate: new Date(body.startDate) }),
         ...(body.endDate !== undefined && { endDate: body.endDate ? new Date(body.endDate) : null }),
+        ...(body.emoji !== undefined && { emoji: body.emoji }),
+        ...(body.barColor !== undefined && { barColor: body.barColor }),
+        ...(body.textColor !== undefined && { textColor: body.textColor }),
+        ...(body.showTimer !== undefined && { showTimer: body.showTimer }),
+        ...(body.speedDesktop !== undefined && { speedDesktop: parseInt(body.speedDesktop) || 47 }),
+        ...(body.speedMobile !== undefined && { speedMobile: parseInt(body.speedMobile) || 70 }),
       },
     });
     return NextResponse.json(coupon);

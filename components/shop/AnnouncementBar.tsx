@@ -9,12 +9,36 @@ function isExpired(c: Coupon): boolean {
   return new Date(c.endDate).getTime() <= Date.now();
 }
 
+function getTimeLeft(endDate: string | null): { h: number; m: number; s: number } | null {
+  if (!endDate) return null;
+  const diff = new Date(endDate).getTime() - Date.now();
+  if (diff <= 0) return null;
+  return { h: Math.floor(diff / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) };
+}
+
+function CountdownTimer({ endDate }: { endDate: string | null }) {
+  const [time, setTime] = useState(() => getTimeLeft(endDate));
+
+  useEffect(() => {
+    if (!endDate) return;
+    const t = setInterval(() => setTime(getTimeLeft(endDate)), 1000);
+    return () => clearInterval(t);
+  }, [endDate]);
+
+  if (!time) return null;
+
+  return (
+    <span className="ann-chip__timer">
+      {String(time.h).padStart(2, '0')}:{String(time.m).padStart(2, '0')}:{String(time.s).padStart(2, '0')}
+    </span>
+  );
+}
+
 export function AnnouncementBar() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
   const setBarVisible = useCouponStore(s => s.setBarVisible);
-  const fetchRef = useRef(0);
 
   const fetchCoupons = useCallback(async () => {
     try {
@@ -30,10 +54,8 @@ export function AnnouncementBar() {
     } catch {}
   }, []);
 
-  // Initial fetch
   useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
 
-  // Check expiry every 30 seconds — remove expired coupons client-side
   useEffect(() => {
     const timer = setInterval(() => {
       setCoupons(prev => {
@@ -51,7 +73,6 @@ export function AnnouncementBar() {
     return () => clearInterval(timer);
   }, []);
 
-  // Re-fetch from API every 5 minutes for fresh data
   useEffect(() => {
     const timer = setInterval(fetchCoupons, 5 * 60_000);
     return () => clearInterval(timer);
@@ -69,27 +90,40 @@ export function AnnouncementBar() {
 
   if (!visible || coupons.length === 0) return null;
 
+  const barColor = coupons[0]?.barColor || '#DC2626';
+  const speedDesktop = coupons[0]?.speedDesktop || 47;
+  const speedMobile = coupons[0]?.speedMobile || 70;
   const tickerItems = [...coupons, ...coupons, ...coupons, ...coupons, ...coupons, ...coupons];
-  const speed = Math.max(coupons.length * 25, 28);
 
   return (
     <>
-      <div className={`ann-bar ${closing ? 'ann-bar--closing' : ''}`}>
+      <div
+        className={`ann-bar ${closing ? 'ann-bar--closing' : ''}`}
+        style={{ background: `linear-gradient(135deg, ${barColor} 0%, ${barColor}dd 40%, ${barColor} 70%, ${barColor}bb 100%)` }}
+      >
         <div className="ann-bar__glow ann-bar__glow--left" />
         <div className="ann-bar__glow ann-bar__glow--right" />
         <div className="ann-bar__shimmer" />
 
         <div className="ann-bar__track">
-          <div className="ann-bar__ticker" style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}>
+          {/* Desktop tickers */}
+          <div className="ann-bar__ticker hidden sm:flex" style={{ '--ticker-duration': `${speedDesktop}s` } as React.CSSProperties}>
             {tickerItems.map((c, i) => <CouponChip key={`a-${c.id}-${i}`} coupon={c} />)}
           </div>
-          <div className="ann-bar__ticker" aria-hidden style={{ '--ticker-duration': `${speed}s` } as React.CSSProperties}>
+          <div className="ann-bar__ticker hidden sm:flex" aria-hidden style={{ '--ticker-duration': `${speedDesktop}s` } as React.CSSProperties}>
             {tickerItems.map((c, i) => <CouponChip key={`b-${c.id}-${i}`} coupon={c} />)}
+          </div>
+          {/* Mobile tickers */}
+          <div className="ann-bar__ticker flex sm:hidden" style={{ '--ticker-duration': `${speedMobile}s` } as React.CSSProperties}>
+            {tickerItems.map((c, i) => <CouponChip key={`c-${c.id}-${i}`} coupon={c} />)}
+          </div>
+          <div className="ann-bar__ticker flex sm:hidden" aria-hidden style={{ '--ticker-duration': `${speedMobile}s` } as React.CSSProperties}>
+            {tickerItems.map((c, i) => <CouponChip key={`d-${c.id}-${i}`} coupon={c} />)}
           </div>
         </div>
 
-        <div className="ann-bar__fade ann-bar__fade--left" />
-        <div className="ann-bar__fade ann-bar__fade--right" />
+        <div className="ann-bar__fade ann-bar__fade--left" style={{ background: `linear-gradient(to right, ${barColor}, transparent)` }} />
+        <div className="ann-bar__fade ann-bar__fade--right" style={{ background: `linear-gradient(to left, ${barColor}, transparent)` }} />
 
         <button onClick={handleClose} className="ann-bar__close" aria-label="Close announcement">
           <X className="h-3 w-3" />
@@ -104,6 +138,8 @@ function CouponChip({ coupon }: { coupon: Coupon }) {
   const discountMatch = coupon.discount?.match(/(\d+%?)/);
   const discountLabel = discountMatch ? discountMatch[1] : null;
   const [copied, setCopied] = useState(false);
+  const emoji = coupon.emoji || '🔥';
+  const textColor = coupon.textColor || '#FFFFFF';
 
   const handleCopy = useCallback(() => {
     if (!coupon.code) return;
@@ -114,11 +150,14 @@ function CouponChip({ coupon }: { coupon: Coupon }) {
   }, [coupon.code]);
 
   return (
-    <span className="ann-chip" role="button" tabIndex={0} onClick={handleCopy} onKeyDown={e => e.key === 'Enter' && handleCopy()}>
-      <span className="ann-chip__fire">🔥</span>
+    <span className="ann-chip" role="button" tabIndex={0} onClick={handleCopy} onKeyDown={e => e.key === 'Enter' && handleCopy()} style={{ color: textColor }}>
+      <span className="ann-chip__fire">{emoji}</span>
       <span className="ann-chip__msg">{coupon.message}</span>
       {discountLabel && (
         <span className="ann-chip__discount">{discountLabel} OFF</span>
+      )}
+      {coupon.showTimer && coupon.endDate && (
+        <CountdownTimer endDate={coupon.endDate} />
       )}
       {coupon.code && (
         <>

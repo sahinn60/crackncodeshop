@@ -33,6 +33,12 @@ export async function POST(req: NextRequest) {
       priority: parseInt(body.priority) || 0,
       startDate: body.startDate ? new Date(body.startDate) : new Date(),
       endDate: body.endDate ? new Date(body.endDate) : null,
+      emoji: body.emoji || '🔥',
+      barColor: body.barColor || '#DC2626',
+      textColor: body.textColor || '#FFFFFF',
+      showTimer: body.showTimer ?? true,
+      speedDesktop: parseInt(body.speedDesktop) || 47,
+      speedMobile: parseInt(body.speedMobile) || 70,
     },
   });
   return NextResponse.json(coupon, { status: 201 });

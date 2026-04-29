@@ -18,7 +18,7 @@ interface Coupon {
   createdAt: string;
 }
 
-const emptyForm = { title: '', code: '', discount: '', message: '', priority: '0', startDate: '', endDate: '', isActive: true };
+const emptyForm = { title: '', code: '', discount: '', message: '', priority: '0', startDate: '', endDate: '', isActive: true, emoji: '🔥', barColor: '#DC2626', textColor: '#FFFFFF', showTimer: true, speedDesktop: '47', speedMobile: '70' };
 
 function utcToBdtLocal(utc: string): string {
   const bdt = new Date(new Date(utc).getTime() + 6 * 60 * 60 * 1000);
@@ -66,6 +66,12 @@ export default function AdminCouponsPage() {
       startDate: c.startDate ? utcToBdtLocal(c.startDate) : '',
       endDate: c.endDate ? utcToBdtLocal(c.endDate) : '',
       isActive: c.isActive,
+      emoji: (c as any).emoji || '🔥',
+      barColor: (c as any).barColor || '#DC2626',
+      textColor: (c as any).textColor || '#FFFFFF',
+      showTimer: (c as any).showTimer ?? true,
+      speedDesktop: String((c as any).speedDesktop || 47),
+      speedMobile: String((c as any).speedMobile || 70),
     });
     setShowForm(true);
   };
@@ -82,6 +88,12 @@ export default function AdminCouponsPage() {
         isActive: form.isActive,
         startDate: form.startDate ? bdtLocalToUtc(form.startDate) : undefined,
         endDate: form.endDate ? bdtLocalToUtc(form.endDate) : undefined,
+        emoji: form.emoji,
+        barColor: form.barColor,
+        textColor: form.textColor,
+        showTimer: form.showTimer,
+        speedDesktop: parseInt(form.speedDesktop as string) || 47,
+        speedMobile: parseInt(form.speedMobile as string) || 70,
       };
       if (editingId) {
         await apiClient.put(`/admin/coupons/${editingId}`, payload);
@@ -222,6 +234,51 @@ export default function AdminCouponsPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">End Date <span className="text-gray-400 font-normal">(BDT, optional)</span></label>
                   <input type="datetime-local" value={form.endDate} onChange={e => set('endDate', e.target.value)} className="block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                </div>
+              </div>
+
+              {/* Design Controls */}
+              <div className="border-t border-gray-100 pt-4 mt-2">
+                <p className="text-sm font-semibold text-gray-900 mb-3">🎨 Design</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Emoji</label>
+                    <select value={form.emoji} onChange={e => set('emoji', e.target.value)} className="block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                      {['🔥', '⚡', '🎉', '💥', '🚀', '💰', '🎁', '✨', '🏷️', '⏰', '🛒', '❤️'].map(e => (
+                        <option key={e} value={e}>{e}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={form.showTimer as boolean} onChange={e => set('showTimer', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                      <span className="text-sm font-medium text-gray-700">⏰ Show Timer</span>
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bar Color</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={form.barColor as string} onChange={e => set('barColor', e.target.value)} className="h-9 w-9 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                      <input type="text" value={form.barColor as string} onChange={e => set('barColor', e.target.value)} className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={form.textColor as string} onChange={e => set('textColor', e.target.value)} className="h-9 w-9 rounded-lg border border-gray-200 cursor-pointer p-0.5" />
+                      <input type="text" value={form.textColor as string} onChange={e => set('textColor', e.target.value)} className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">🖥️ Desktop Speed (seconds)</label>
+                    <input type="number" min="5" max="200" value={form.speedDesktop as string} onChange={e => set('speedDesktop', e.target.value)} className="block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    <p className="text-[11px] text-gray-400 mt-1">Higher = slower scroll</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">📱 Mobile Speed (seconds)</label>
+                    <input type="number" min="5" max="200" value={form.speedMobile as string} onChange={e => set('speedMobile', e.target.value)} className="block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                    <p className="text-[11px] text-gray-400 mt-1">Higher = slower scroll</p>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3 pt-2">

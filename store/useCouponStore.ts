@@ -8,6 +8,12 @@ export interface Coupon {
   message: string;
   priority: number;
   endDate: string | null;
+  emoji: string;
+  barColor: string;
+  textColor: string;
+  showTimer: boolean;
+  speedDesktop: number;
+  speedMobile: number;
 }
 
 interface CouponState {
