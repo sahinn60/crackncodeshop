@@ -184,6 +184,9 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
 
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
   const load = () => apiClient.get('/admin/products').then(({ data }) => setProducts(data)).finally(() => setIsLoading(false));
   useEffect(() => {
     load();
@@ -227,16 +230,24 @@ export default function AdminProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...form, price: parseFloat(form.price), oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null, features: form.features.split('\n').filter(Boolean), rating: parseFloat(form.rating) || 0, reviewCount: parseInt(form.reviewCount) || 0, youtubeUrl: form.youtubeUrl, fileUrl: form.fileUrl };
-    if (editingId) {
-      await apiClient.put(`/products/${editingId}`, payload);
-    } else {
-      await apiClient.post('/products', payload);
+    setSaving(true);
+    setSaveError('');
+    try {
+      const payload = { ...form, price: parseFloat(form.price), oldPrice: form.oldPrice ? parseFloat(form.oldPrice) : null, features: form.features.split('\n').filter(Boolean), rating: parseFloat(form.rating) || 0, reviewCount: parseInt(form.reviewCount) || 0, youtubeUrl: form.youtubeUrl, fileUrl: form.fileUrl };
+      if (editingId) {
+        await apiClient.put(`/products/${editingId}`, payload);
+      } else {
+        await apiClient.post('/products', payload);
+      }
+      setShowForm(false);
+      setForm(emptyForm);
+      setEditingId(null);
+      load();
+    } catch (err: any) {
+      setSaveError(err.response?.data?.error || err.message || 'Failed to save product');
+    } finally {
+      setSaving(false);
     }
-    setShowForm(false);
-    setForm(emptyForm);
-    setEditingId(null);
-    load();
   };
 
   return (
@@ -265,7 +276,7 @@ export default function AdminProductsPage() {
               ] as const).map(f => (
                 <div key={f.key}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-                  <input type={f.type} required={f.key !== 'oldPrice'} value={form[f.key] as string} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
+                  <input type={f.type} required={f.key === 'title' || f.key === 'price'} value={form[f.key] as string} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
                 </div>
               ))}
               <ImageUpload
@@ -323,8 +334,11 @@ export default function AdminProductsPage() {
                   <span className="text-sm font-medium text-gray-700">✅ Published (visible on storefront)</span>
                 </label>
               </div>
+              {saveError && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{saveError}</div>
+              )}
               <div className="flex gap-3 pt-2">
-                <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">{editingId ? 'Save Changes' : 'Create Product'}</Button>
+                <Button type="submit" disabled={saving} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">{saving ? 'Saving...' : editingId ? 'Save Changes' : 'Create Product'}</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancel</Button>
               </div>
             </form>
