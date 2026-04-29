@@ -233,8 +233,8 @@ export default function ProductDetailsPage() {
         {/* Product Hero */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-x-12 xl:gap-x-16">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="lg:max-w-lg lg:self-start">
-            <div className="aspect-[4/3] overflow-hidden rounded-2xl sm:rounded-3xl bg-gray-200 shadow-xl border border-gray-200">
-              <img src={product.imageUrl} alt={product.title} className="h-full w-full object-cover" />
+            <div className="overflow-hidden rounded-2xl sm:rounded-3xl bg-gray-100 shadow-xl border border-gray-200">
+              <img src={product.imageUrl} alt={product.title} className="w-full h-auto object-contain" />
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-200 shadow-sm text-sm text-gray-600">
