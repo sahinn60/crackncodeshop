@@ -48,30 +48,35 @@ export async function POST(req: NextRequest) {
   const { error } = requireAdminOrSubAdmin(req, 'products');
   if (error) return error;
 
-  const data = await req.json();
-  if (!data.title || !data.price || !data.imageUrl || !data.category)
-    return NextResponse.json({ error: 'title, price, imageUrl and category are required' }, { status: 400 });
+  try {
+    const data = await req.json();
+    if (!data.title || !data.price)
+      return NextResponse.json({ error: 'title and price are required' }, { status: 400 });
 
-  const product = await prisma.product.create({
-    data: {
-      title: String(data.title).trim(),
-      description: String(data.description || '').trim(),
-      longDescription: String(data.longDescription || '').trim(),
-      price: parseFloat(data.price),
-      oldPrice: data.oldPrice ? parseFloat(data.oldPrice) : null,
-      imageUrl: String(data.imageUrl).trim(),
-      category: String(data.category).trim(),
-      rating: parseFloat(data.rating) || 0,
-      reviewCount: parseInt(data.reviewCount) || 0,
-      features: JSON.stringify(Array.isArray(data.features) ? data.features : []),
-      lastUpdated: data.lastUpdated || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-      format: String(data.format || '').trim(),
-      isTopSelling: data.isTopSelling ?? false,
-      isBundle: data.isBundle ?? false,
-      isPublished: data.isPublished ?? true,
-      youtubeUrl: String(data.youtubeUrl || '').trim(),
-      fileUrl: String(data.fileUrl || '').trim(),
-    },
-  });
-  return NextResponse.json(product, { status: 201 });
+    const product = await prisma.product.create({
+      data: {
+        title: String(data.title).trim(),
+        description: String(data.description || '').trim(),
+        longDescription: String(data.longDescription || '').trim(),
+        price: parseFloat(data.price),
+        oldPrice: data.oldPrice ? parseFloat(data.oldPrice) : null,
+        imageUrl: String(data.imageUrl || '').trim(),
+        category: String(data.category || '').trim(),
+        rating: parseFloat(data.rating) || 0,
+        reviewCount: parseInt(data.reviewCount) || 0,
+        features: JSON.stringify(Array.isArray(data.features) ? data.features : []),
+        lastUpdated: data.lastUpdated || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        format: String(data.format || '').trim(),
+        isTopSelling: data.isTopSelling ?? false,
+        isBundle: data.isBundle ?? false,
+        isPublished: data.isPublished ?? true,
+        youtubeUrl: String(data.youtubeUrl || '').trim(),
+        fileUrl: String(data.fileUrl || '').trim(),
+      },
+    });
+    return NextResponse.json(product, { status: 201 });
+  } catch (err: any) {
+    console.error('[products/POST] Error:', err?.message);
+    return NextResponse.json({ error: err?.message || 'Failed to create product' }, { status: 500 });
+  }
 }
