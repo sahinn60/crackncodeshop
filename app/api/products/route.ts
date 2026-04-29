@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireAdminOrSubAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { error } = requireAdmin(req);
+  const { error } = requireAdminOrSubAdmin(req, 'products');
   if (error) return error;
 
   const data = await req.json();
