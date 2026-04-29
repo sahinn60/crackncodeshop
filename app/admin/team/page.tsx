@@ -7,12 +7,18 @@ import { Plus, Trash2, X, Key, Copy, Check, RefreshCw, Shield } from 'lucide-rea
 
 const ALL_PERMISSIONS = [
   { key: 'products', label: 'Products', desc: 'Create, edit, delete products' },
-  { key: 'orders', label: 'Orders', desc: 'View and manage orders' },
   { key: 'categories', label: 'Categories', desc: 'Manage categories' },
-  { key: 'users', label: 'Users', desc: 'View user list' },
-  { key: 'analytics', label: 'Analytics', desc: 'View analytics data' },
+  { key: 'bundles', label: 'Bundles', desc: 'Create and manage product bundles' },
+  { key: 'flash-sales', label: 'Flash Sales', desc: 'Create and manage flash sales' },
+  { key: 'upsells', label: 'Upsells', desc: 'Manage upsell rules' },
+  { key: 'landing-pages', label: 'Landing Pages', desc: 'Create and edit landing pages' },
+  { key: 'logo-showcase', label: 'Logo Showcase', desc: 'Manage partner logos section' },
+  { key: 'orders', label: 'Orders', desc: 'View and manage orders' },
+  { key: 'reviews', label: 'Reviews', desc: 'Moderate product reviews' },
+  { key: 'users', label: 'Users', desc: 'View and manage user list' },
+  { key: 'analytics', label: 'Analytics', desc: 'View analytics and visitor data' },
   { key: 'coupons', label: 'Coupons', desc: 'Manage discount coupons' },
-  { key: 'settings', label: 'Settings', desc: 'View site settings (read-only)' },
+  { key: 'settings', label: 'Settings', desc: 'View and edit site settings' },
 ];
 
 interface SubAdmin {
@@ -160,7 +166,16 @@ export default function AdminTeamPage() {
                 <input type="email" required value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Permissions</label>
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, permissions: p.permissions.length === ALL_PERMISSIONS.length ? [] : ALL_PERMISSIONS.map(x => x.key) }))}
+                    className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                  >
+                    {form.permissions.length === ALL_PERMISSIONS.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
                 <div className="space-y-2">
                   {ALL_PERMISSIONS.map(p => (
                     <label key={p.key} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors">
@@ -195,6 +210,22 @@ export default function AdminTeamPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative max-h-[90vh] overflow-y-auto">
             <button onClick={() => setEditingId(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
             <h2 className="text-lg font-bold text-gray-900 mb-5">Edit Permissions</h2>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-500">{members.find(m => m.id === editingId)?.name}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const member = members.find(m => m.id === editingId);
+                  if (!member) return;
+                  const allSelected = member.permissions.length === ALL_PERMISSIONS.length;
+                  const newPerms = allSelected ? [] : ALL_PERMISSIONS.map(x => x.key);
+                  setMembers(prev => prev.map(m => m.id === editingId ? { ...m, permissions: newPerms } : m));
+                }}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              >
+                {members.find(m => m.id === editingId)?.permissions.length === ALL_PERMISSIONS.length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
             <div className="space-y-2">
               {ALL_PERMISSIONS.map(p => {
                 const member = members.find(m => m.id === editingId);
