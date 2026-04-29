@@ -187,7 +187,6 @@ export default function AdminProductsPage() {
 
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
-  const [authorFilter, setAuthorFilter] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -195,7 +194,6 @@ export default function AdminProductsPage() {
   const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    if (authorFilter) params.set('author', authorFilter);
     if (sortBy) params.set('sort', sortBy);
     apiClient.get(`/admin/products?${params}`).then(({ data }) => setProducts(data)).finally(() => setIsLoading(false));
   };
@@ -372,9 +370,6 @@ export default function AdminProductsPage() {
           <option value="price-low">Price: Low→High</option>
           <option value="popular">Most Popular</option>
         </select>
-        {authorFilter && (
-          <button onClick={() => { setAuthorFilter(''); setTimeout(load, 100); }} className="text-xs text-indigo-600 hover:underline">Clear author filter</button>
-        )}
       </div>
 
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
@@ -394,7 +389,7 @@ export default function AdminProductsPage() {
             ) : products.map(p => (
               <tr key={p.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.title}</td>
-                <td className="px-6 py-4 text-xs text-gray-500"><button onClick={() => { setAuthorFilter((p as any).authorId || ''); setTimeout(load, 100); }} className="hover:text-indigo-600 hover:underline">{(p as any).authorName || '—'}</button></td>
+                <td className="px-6 py-4 text-xs text-gray-500">{(p as any).authorName || '—'}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div><Price amount={p.price} /></div>
