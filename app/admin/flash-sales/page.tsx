@@ -29,10 +29,10 @@ export default function AdminFlashSalesPage() {
   const load = () => {
     Promise.all([
       apiClient.get('/admin/flash-sales'),
-      apiClient.get('/products', { params: { limit: 100 } }),
+      apiClient.get('/admin/products'),
     ]).then(([{ data: s }, { data: p }]) => {
       setSales(s);
-      setProducts(p.products || []);
+      setProducts(p || []);
     }).finally(() => setIsLoading(false));
   };
   useEffect(() => { load(); }, []);
