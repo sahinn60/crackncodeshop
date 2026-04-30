@@ -1,11 +1,22 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
 
 function AnimatedNumber() {
   const ref = useRef<HTMLSpanElement>(null);
   const ran = useRef(false);
+  const [target, setTarget] = useState(1000);
+
+  useEffect(() => {
+    fetch('/api/stats/user-count').then(r => r.json()).then(d => {
+      if (d.count > 0) {
+        // Round down to nearest 1000
+        const rounded = Math.floor(d.count / 1000) * 1000;
+        setTarget(Math.max(1000, rounded));
+      }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
@@ -19,7 +30,7 @@ function AnimatedNumber() {
       const tick = (now: number) => {
         const p = Math.min((now - start) / dur, 1);
         const eased = 1 - Math.pow(1 - p, 3);
-        const v = Math.round(eased * 5000);
+        const v = Math.round(eased * target);
         el.textContent = v.toLocaleString() + (p >= 1 ? '+' : '');
         if (p < 1) return requestAnimationFrame(tick);
         el.style.transition = 'transform 0.3s ease';
@@ -30,7 +41,7 @@ function AnimatedNumber() {
     }, { threshold: 0.5 });
     obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [target]);
 
   return (
     <span
