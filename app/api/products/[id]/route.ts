@@ -4,7 +4,10 @@ import { requireAdmin, requireAdminOrSubAdmin } from '@/lib/auth';
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await prisma.product.findUnique({ where: { id } });
+  // Accept both ID (cuid) and slug
+  const product = await prisma.product.findFirst({
+    where: { OR: [{ id }, { slug: id }] },
+  });
   if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   // Strip fileUrl from public response — downloads go through /api/download
   const { fileUrl, ...publicProduct } = product;
@@ -22,9 +25,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const data = await req.json();
 
   try {
+    // Regenerate slug if title changed
+    let slugUpdate = {};
+    if (data.title !== undefined) {
+      const newSlug = String(data.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 100);
+      const existing = await prisma.product.findFirst({ where: { slug: newSlug, id: { not: id } } });
+      slugUpdate = { slug: existing ? `${newSlug}-${Date.now().toString(36)}` : newSlug };
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
+        ...slugUpdate,
         ...(data.title !== undefined && { title: String(data.title).trim() }),
         ...(data.description !== undefined && { description: String(data.description).trim() }),
         ...(data.longDescription !== undefined && { longDescription: String(data.longDescription).trim() }),

@@ -49,6 +49,7 @@ model Product {
   isTopSelling    Boolean         @default(false)
   isBundle        Boolean         @default(false)
   youtubeUrl      String          @default("")
+  slug            String          @default("")
   authorId        String          @default("")
   authorName      String          @default("")
   createdAt       DateTime        @default(now())
@@ -62,6 +63,7 @@ model Product {
   @@index([category])
   @@index([isPublished])
   @@index([createdAt])
+  @@index([slug])
 }
 
 model Order {
@@ -263,9 +265,11 @@ model FlashSale {
   title              String
   discountPercentage Float           @default(0)
   isDaily            Boolean         @default(true)
-  startTime          DateTime?       // custom timer start (UTC)
-  endTime            DateTime?       // custom timer end (UTC)
+  startTime          DateTime?
+  endTime            DateTime?
   isActive           Boolean         @default(true)
+  animation          String          @default("fade")
+  animationSpeed     String          @default("normal")
   createdAt          DateTime        @default(now())
   items              FlashSaleItem[]
 

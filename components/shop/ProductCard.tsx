@@ -19,6 +19,7 @@ export interface Product {
   rating: number;
   reviewCount: number;
   category: string;
+  slug?: string;
   isBundle?: boolean;
   isTopSelling?: boolean;
 }
@@ -27,6 +28,8 @@ export function ProductCard({ product }: { product: Product }) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const { addItem } = useCartStore();
   const router = useRouter();
+
+  const productUrl = `/products/${product.slug || product.id}`;
 
   const handleBuyNow = () => {
     addItem(product, true);
@@ -42,7 +45,7 @@ export function ProductCard({ product }: { product: Product }) {
     <>
       <div className="group flex flex-col rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden h-full relative">
         <div className="aspect-square overflow-hidden relative bg-gray-100">
-          <Link href={`/products/${product.id}`} className="block w-full h-full">
+          <Link href={productUrl} className="block w-full h-full">
             <img src={product.imageUrl} alt={product.title} loading="lazy" decoding="async" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
           </Link>
 
@@ -86,7 +89,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Title */}
-          <Link href={`/products/${product.id}`}>
+          <Link href={productUrl}>
             <h3 className="text-xs sm:text-sm font-normal text-slate-600 group-hover:text-primary transition-colors line-clamp-1 leading-snug mb-1">{product.title}</h3>
           </Link>
 
@@ -156,7 +159,7 @@ export function ProductCard({ product }: { product: Product }) {
                     <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors font-medium">
                       <Heart className="h-4 w-4" /> Wishlist
                     </button>
-                    <Link href={`/products/${product.id}`} className="flex items-center gap-1 text-sm text-primary hover:underline font-medium">
+                    <Link href={productUrl} className="flex items-center gap-1 text-sm text-primary hover:underline font-medium">
                       Full Details <Eye className="h-3.5 w-3.5 ml-1" />
                     </Link>
                   </div>

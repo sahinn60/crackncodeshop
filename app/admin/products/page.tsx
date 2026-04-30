@@ -187,6 +187,8 @@ export default function AdminProductsPage() {
 
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [authorFilter, setAuthorFilter] = useState('');
+  const [authors, setAuthors] = useState<{ id: string; name: string }[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -194,8 +196,15 @@ export default function AdminProductsPage() {
   const load = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
+    if (authorFilter) params.set('author', authorFilter);
     if (sortBy) params.set('sort', sortBy);
-    apiClient.get(`/admin/products?${params}`).then(({ data }) => setProducts(data)).finally(() => setIsLoading(false));
+    apiClient.get(`/admin/products?${params}`).then(({ data }) => {
+      setProducts(data);
+      // Extract unique authors for filter dropdown
+      const authorMap = new Map<string, string>();
+      data.forEach((p: any) => { if (p.authorId && p.authorName) authorMap.set(p.authorId, p.authorName); });
+      setAuthors(Array.from(authorMap, ([id, name]) => ({ id, name })));
+    }).finally(() => setIsLoading(false));
   };
   useEffect(() => {
     load();
@@ -370,24 +379,32 @@ export default function AdminProductsPage() {
           <option value="price-low">Price: Low→High</option>
           <option value="popular">Most Popular</option>
         </select>
+        <select value={authorFilter} onChange={e => { setAuthorFilter(e.target.value); setTimeout(load, 100); }}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none bg-white">
+          <option value="">All Authors</option>
+          {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
       </div>
 
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              {['Title', 'Author', 'Category', 'Price', 'Flags', 'Created', 'Actions'].map(h => (
+              {['', 'Title', 'Author', 'Category', 'Price', 'Flags', 'Created', 'Actions'].map(h => (
                 <th key={h} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
-              <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
+              <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">Loading...</td></tr>
             ) : products.length === 0 ? (
-              <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No products yet. Add your first product!</td></tr>
+              <tr><td colSpan={8} className="px-6 py-8 text-center text-gray-500">No products yet. Add your first product!</td></tr>
             ) : products.map(p => (
               <tr key={p.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  {p.imageUrl ? <img src={p.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover bg-gray-100" /> : <div className="h-10 w-10 rounded-lg bg-gray-100" />}
+                </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{p.title}</td>
                 <td className="px-6 py-4 text-xs text-gray-500">{(p as any).authorName || '—'}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">{p.category}</td>

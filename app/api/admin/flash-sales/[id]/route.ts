@@ -6,7 +6,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { error } = requireAdminOrSubAdmin(req, 'products');
   if (error) return error;
   const { id } = await params;
-  const { title, discountPercentage, isDaily, startTime, endTime, isActive, productIds } = await req.json();
+  const { title, discountPercentage, isDaily, startTime, endTime, isActive, productIds, animation, animationSpeed } = await req.json();
 
   const data: any = {};
   if (title !== undefined) data.title = title;
@@ -15,6 +15,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (startTime !== undefined) data.startTime = startTime ? new Date(startTime) : null;
   if (endTime !== undefined) data.endTime = endTime ? new Date(endTime) : null;
   if (isActive !== undefined) data.isActive = Boolean(isActive);
+  if (animation !== undefined) data.animation = animation;
+  if (animationSpeed !== undefined) data.animationSpeed = animationSpeed;
 
   await prisma.flashSale.update({ where: { id }, data });
 

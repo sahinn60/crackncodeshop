@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const { error } = requireAdminOrSubAdmin(req, 'products');
   if (error) return error;
 
-  const { title, discountPercentage, isDaily, startTime, endTime, productIds } = await req.json();
+  const { title, discountPercentage, isDaily, startTime, endTime, productIds, animation, animationSpeed } = await req.json();
   if (!title || !Array.isArray(productIds) || productIds.length < 1)
     return NextResponse.json({ error: 'Title and at least 1 product required' }, { status: 400 });
 
@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
         isDaily: Boolean(isDaily),
         startTime: startTime ? new Date(startTime) : null,
         endTime: endTime ? new Date(endTime) : null,
+        animation: animation || 'fade',
+        animationSpeed: animationSpeed || 'normal',
         items: { create: productIds.map((pid: string) => ({ productId: pid })) },
       },
       include: { items: { include: { product: { select: { id: true, title: true, price: true, imageUrl: true } } } } },

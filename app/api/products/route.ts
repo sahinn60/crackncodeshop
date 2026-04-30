@@ -63,6 +63,11 @@ export async function POST(req: NextRequest) {
     if (oldPrice !== null && (isNaN(oldPrice) || oldPrice < 0 || oldPrice > 9999999))
       return NextResponse.json({ error: 'Old price must be between 0 and 9,999,999' }, { status: 400 });
 
+    // Generate slug from title
+    const baseSlug = String(data.title).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 100);
+    const existing = await prisma.product.findFirst({ where: { slug: baseSlug } });
+    const slug = existing ? `${baseSlug}-${Date.now().toString(36)}` : baseSlug;
+
     // Get author info
     const author = await prisma.user.findUnique({ where: { id: user!.id }, select: { id: true, name: true } });
 
@@ -85,6 +90,7 @@ export async function POST(req: NextRequest) {
         isPublished: data.isPublished ?? true,
         youtubeUrl: String(data.youtubeUrl || '').trim().slice(0, 500),
         fileUrl: String(data.fileUrl || '').trim().slice(0, 500),
+        slug,
         authorId: user!.id,
         authorName: author?.name || 'Unknown',
       },

@@ -59,6 +59,8 @@ export async function GET(req: NextRequest) {
         isDaily: sale.isDaily,
         startTime: computedStart,
         endTime: computedEnd,
+        animation: sale.animation,
+        animationSpeed: sale.animationSpeed,
         products: publishedProducts.map(p => ({
           ...p,
           salePrice: p.price * (1 - sale.discountPercentage / 100),

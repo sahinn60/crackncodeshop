@@ -16,6 +16,7 @@ interface FlashSale {
 const emptyForm = {
   title: '', discountPercentage: '0', isDaily: true,
   startTime: '', endTime: '', productIds: [] as string[],
+  animation: 'fade', animationSpeed: 'normal',
 };
 
 export default function AdminFlashSalesPage() {
@@ -48,6 +49,8 @@ export default function AdminFlashSalesPage() {
       startTime: s.startTime ? new Date(s.startTime).toISOString().slice(0, 16) : '',
       endTime: s.endTime ? new Date(s.endTime).toISOString().slice(0, 16) : '',
       productIds: s.items.map(i => i.product.id),
+      animation: (s as any).animation || 'fade',
+      animationSpeed: (s as any).animationSpeed || 'normal',
     });
     setShowForm(true);
   };
@@ -60,6 +63,8 @@ export default function AdminFlashSalesPage() {
         discountPercentage: parseFloat(form.discountPercentage) || 0,
         startTime: form.isDaily ? null : form.startTime || null,
         endTime: form.isDaily ? null : form.endTime || null,
+        animation: form.animation,
+        animationSpeed: form.animationSpeed,
       };
       if (editingId) {
         await apiClient.put(`/admin/flash-sales/${editingId}`, payload);
@@ -193,6 +198,35 @@ export default function AdminFlashSalesPage() {
                   </span>
                 </div>
               )}
+
+              {/* Animation Controls */}
+              <div className="border-t border-gray-100 pt-4 mt-2">
+                <p className="text-sm font-semibold text-gray-900 mb-3">✨ Animation</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Style</label>
+                    <select value={form.animation} onChange={e => setForm(f => ({ ...f, animation: e.target.value }))}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none">
+                      <option value="fade">Fade In</option>
+                      <option value="slide-left">Slide Left</option>
+                      <option value="slide-up">Slide Up</option>
+                      <option value="zoom">Zoom In</option>
+                      <option value="bounce">Bounce</option>
+                      <option value="glow">Glow Pulse</option>
+                      <option value="scale">Scale Hover</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Speed</label>
+                    <select value={form.animationSpeed} onChange={e => setForm(f => ({ ...f, animationSpeed: e.target.value }))}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none">
+                      <option value="slow">Slow</option>
+                      <option value="normal">Normal</option>
+                      <option value="fast">Fast</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
               <div className="flex gap-3 pt-2">
                 <Button type="submit" disabled={form.productIds.length < 1} className="flex-1 bg-red-600 hover:bg-red-700 text-white">

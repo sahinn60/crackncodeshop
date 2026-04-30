@@ -222,9 +222,36 @@ export default function ProductDetailsPage() {
   if (!product) return null;
 
   const features: string[] = Array.isArray(product.features) ? product.features : [];
+  const productUrl = `https://crackncode.shop/products/${product.slug || id}`;
+
+  // JSON-LD Structured Data
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: product.description,
+    image: product.imageUrl,
+    url: productUrl,
+    brand: { '@type': 'Brand', name: 'CrackNcode' },
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'BDT',
+      availability: 'https://schema.org/InStock',
+      url: productUrl,
+    },
+    ...(product.rating > 0 && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: product.rating,
+        reviewCount: product.reviewCount || reviews.length || 1,
+      },
+    }),
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="container mx-auto px-4 py-5 sm:py-8 sm:px-6 lg:px-8">
         <Link href="/products" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-primary transition-colors mb-5 sm:mb-8">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to products
