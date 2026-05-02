@@ -8,20 +8,26 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = req.nextUrl;
   const search = searchParams.get('search') || '';
+  const category = searchParams.get('category') || '';
+  const status = searchParams.get('status') || ''; // published | draft
   const author = searchParams.get('author') || '';
-  const sort = searchParams.get('sort') || 'newest';
+  const sort = searchParams.get('sort') || 'order';
 
-  const where = {
+  const where: any = {
     ...(search && {
       OR: [
         { title: { contains: search, mode: 'insensitive' as const } },
         { category: { contains: search, mode: 'insensitive' as const } },
       ],
     }),
+    ...(category && { category }),
+    ...(status === 'published' && { isPublished: true }),
+    ...(status === 'draft' && { isPublished: false }),
     ...(author && { authorId: author }),
   };
 
   const orderByMap: Record<string, any> = {
+    'order': { displayOrder: 'asc' },
     'newest': { createdAt: 'desc' },
     'oldest': { createdAt: 'asc' },
     'price-high': { price: 'desc' },
@@ -31,8 +37,8 @@ export async function GET(req: NextRequest) {
 
   const products = await prisma.product.findMany({
     where,
-    orderBy: orderByMap[sort] || { createdAt: 'desc' },
+    orderBy: orderByMap[sort] || { displayOrder: 'asc' },
   });
 
-  return NextResponse.json(products);
+  return NextResponse.json({ products, total: products.length });
 }

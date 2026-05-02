@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || '';
+  const maxPriceParam = searchParams.get('maxPrice');
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit = Math.min(100, parseInt(searchParams.get('limit') || '16'));
 
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
       ],
     }),
     ...(category && category !== 'All' && { category }),
+    ...(maxPriceParam && { price: { lte: parseFloat(maxPriceParam) } }),
   };
 
   const orderByMap: Record<string, any> = {
@@ -29,17 +31,30 @@ export async function GET(req: NextRequest) {
     'rating': { rating: 'desc' },
     'newest': { createdAt: 'desc' },
   };
-  const orderBy = orderByMap[sort] || { createdAt: 'desc' };
+  const orderBy = orderByMap[sort] || [{ displayOrder: 'asc' }, { createdAt: 'desc' }];
 
-  const [products, total] = await Promise.all([
+  // Build a "base" where without maxPrice filter for getting the true max price
+  const baseWhere = {
+    isPublished: true,
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: 'insensitive' as const } },
+        { description: { contains: search, mode: 'insensitive' as const } },
+      ],
+    }),
+    ...(category && category !== 'All' && { category }),
+  };
+
+  const [products, total, priceAgg] = await Promise.all([
     prisma.product.findMany({
       where, skip: (page - 1) * limit, take: limit, orderBy,
       omit: { fileUrl: true },
     }),
     prisma.product.count({ where }),
+    prisma.product.aggregate({ where: baseWhere, _max: { price: true } }),
   ]);
 
-  return NextResponse.json({ products, total, pages: Math.ceil(total / limit) }, {
+  return NextResponse.json({ products, total, pages: Math.ceil(total / limit), maxPrice: priceAgg._max.price || 0 }, {
     headers: { 'Cache-Control': 'no-store, max-age=0' },
   });
 }

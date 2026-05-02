@@ -199,10 +199,11 @@ export default function AdminProductsPage() {
     if (authorFilter) params.set('author', authorFilter);
     if (sortBy) params.set('sort', sortBy);
     apiClient.get(`/admin/products?${params}`).then(({ data }) => {
-      setProducts(data);
+      const list = Array.isArray(data) ? data : data.products || [];
+      setProducts(list);
       // Extract unique authors for filter dropdown
       const authorMap = new Map<string, string>();
-      data.forEach((p: any) => { if (p.authorId && p.authorName) authorMap.set(p.authorId, p.authorName); });
+      list.forEach((p: any) => { if (p.authorId && p.authorName) authorMap.set(p.authorId, p.authorName); });
       setAuthors(Array.from(authorMap, ([id, name]) => ({ id, name })));
     }).finally(() => setIsLoading(false));
   };

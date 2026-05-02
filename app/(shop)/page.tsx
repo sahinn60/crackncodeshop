@@ -229,7 +229,7 @@ export default function HomePage() {
           </div>
 
           {/* Hero Banner Slider */}
-          <div className="flex-1 relative overflow-hidden rounded-lg sm:rounded-xl bg-gray-100 shadow-sm min-h-[200px] sm:min-h-[320px] lg:min-h-[360px]">
+          <div className="flex-1 relative overflow-hidden rounded-lg sm:rounded-xl bg-gray-100 shadow-sm sm:min-h-[320px] lg:min-h-[360px]">
             {banners.length > 0 ? (
               <>
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
@@ -241,14 +241,14 @@ export default function HomePage() {
                     animate="center"
                     exit="exit"
                     transition={{ duration: 0.5, ease: 'easeInOut' }}
-                    className="absolute inset-0"
+                    className="sm:absolute sm:inset-0"
                   >
                     {banners[currentSlide].link ? (
                       <Link href={banners[currentSlide].link} className="block w-full h-full">
                         <img
                           src={banners[currentSlide].url}
                           alt={banners[currentSlide].alt}
-                          className="w-full h-full object-cover"
+                          className="w-full h-auto sm:h-full object-contain sm:object-cover"
                           {...(currentSlide === 0 ? { fetchPriority: 'high' as any, loading: 'eager' } : { loading: 'lazy', decoding: 'async' })}
                         />
                       </Link>
@@ -256,7 +256,7 @@ export default function HomePage() {
                       <img
                         src={banners[currentSlide].url}
                         alt={banners[currentSlide].alt}
-                        className="w-full h-full object-cover"
+                        className="w-full h-auto sm:h-full object-contain sm:object-cover"
                         {...(currentSlide === 0 ? { fetchPriority: 'high' as any, loading: 'eager' } : { loading: 'lazy', decoding: 'async' })}
                       />
                     )}

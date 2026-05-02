@@ -46,6 +46,8 @@ model Product {
   oldPrice        Float?                         // original price before discount
   downloadLimit   Int             @default(5)   // max downloads per purchase
   isPublished     Boolean         @default(true)
+  isTrending      Boolean         @default(false)
+  displayOrder    Int             @default(0)
   isTopSelling    Boolean         @default(false)
   isBundle        Boolean         @default(false)
   youtubeUrl      String          @default("")
@@ -64,6 +66,8 @@ model Product {
   @@index([isPublished])
   @@index([createdAt])
   @@index([slug])
+  @@index([displayOrder])
+  @@index([isTrending])
 }
 
 model Order {

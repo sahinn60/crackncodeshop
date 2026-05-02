@@ -43,14 +43,15 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <>
-      <div className="group flex flex-col rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden h-full relative">
-        <div className="aspect-square overflow-hidden relative bg-gray-100">
+      <div className="group flex flex-col rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full">
+        {/* Image container — all overlays stay inside */}
+        <div className="aspect-square overflow-hidden relative bg-gray-100 rounded-t-xl sm:rounded-t-2xl">
           <Link href={productUrl} className="block w-full h-full">
             <img src={product.imageUrl} alt={product.title} loading="lazy" decoding="async" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
           </Link>
 
           {/* Top-left badges */}
-          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 pointer-events-none flex flex-col gap-1">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 pointer-events-none flex flex-col gap-1 z-[2]">
             <span className="inline-flex items-center rounded-full bg-white/95 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-xs font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur-sm">
               {product.category}
             </span>
@@ -61,40 +62,41 @@ export function ProductCard({ product }: { product: Product }) {
             )}
           </div>
 
-          {/* Discount badge */}
+          {/* Discount badge — top-right, always visible */}
           {discountPct > 0 && (
-            <div className="absolute top-2 sm:top-3 right-2 sm:right-3 pointer-events-none z-[1]">
+            <div className="absolute top-2 sm:top-3 right-2 sm:right-3 pointer-events-none z-[3]">
               <span className="inline-flex items-center rounded-md sm:rounded-lg bg-primary px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-extrabold text-white shadow-md">
                 -{discountPct}%
               </span>
             </div>
           )}
 
-          {/* Hover action icons */}
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:opacity-0 sm:translate-x-3 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 transition-all duration-300 z-10">
-            <button className="bg-white/95 backdrop-blur-sm p-1.5 sm:p-2 rounded-full text-gray-500 hover:text-primary hover:bg-white shadow-md border border-gray-100 transition-all hover:scale-110 active:scale-95" title="Wishlist" onClick={(e) => e.preventDefault()}>
-              <Heart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          {/* Hover action icons — hidden on mobile, shown on desktop hover */}
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex-col gap-1.5 z-[4] hidden sm:flex opacity-0 translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+            <button className="bg-white/95 backdrop-blur-sm p-2 rounded-full text-gray-500 hover:text-primary hover:bg-white shadow-md border border-gray-100 transition-all hover:scale-110 active:scale-95" title="Wishlist" onClick={(e) => e.preventDefault()}>
+              <Heart className="h-3.5 w-3.5" />
             </button>
-            <button className="bg-white/95 backdrop-blur-sm p-1.5 sm:p-2 rounded-full text-gray-500 hover:text-primary hover:bg-white shadow-md border border-gray-100 transition-all hover:scale-110 active:scale-95" title="Quick View" onClick={(e) => { e.preventDefault(); setIsQuickViewOpen(true); }}>
-              <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <button className="bg-white/95 backdrop-blur-sm p-2 rounded-full text-gray-500 hover:text-primary hover:bg-white shadow-md border border-gray-100 transition-all hover:scale-110 active:scale-95" title="Quick View" onClick={(e) => { e.preventDefault(); setIsQuickViewOpen(true); }}>
+              <Eye className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col p-2.5 sm:p-4">
+        {/* Content area — completely separate from image, no overlap possible */}
+        <div className="flex flex-1 flex-col p-3 sm:p-4 gap-1.5 sm:gap-2">
           {/* Rating */}
-          <div className="flex items-center gap-0.5 sm:gap-1 mb-1">
-            <Star className="h-3 w-3 fill-accent text-accent" />
+          <div className="flex items-center gap-1">
+            <Star className="h-3 w-3 fill-accent text-accent flex-shrink-0" />
             <span className="text-[10px] sm:text-xs font-semibold text-gray-800">{product.rating}</span>
           </div>
 
-          {/* Title */}
+          {/* Title — 2 lines on mobile so it's always readable */}
           <Link href={productUrl}>
-            <h3 className="text-xs sm:text-sm font-normal text-slate-600 group-hover:text-primary transition-colors line-clamp-1 leading-snug mb-1">{product.title}</h3>
+            <h3 className="text-[13px] sm:text-sm font-medium text-slate-700 group-hover:text-primary transition-colors line-clamp-2 leading-[1.4]">{product.title}</h3>
           </Link>
 
-          {/* Price */}
-          <div className="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-100 flex items-center gap-1.5">
+          {/* Price — pushed to bottom */}
+          <div className="mt-auto pt-2 border-t border-gray-100 flex items-center gap-1.5">
             <span className="text-sm sm:text-base font-semibold text-dark"><Price amount={product.price} /></span>
             {product.oldPrice && product.oldPrice > product.price && (
               <span className="text-[9px] sm:text-xs text-gray-400 line-through"><Price amount={product.oldPrice} /></span>
@@ -102,7 +104,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Buttons */}
-          <div className="mt-1.5 sm:mt-2 grid grid-cols-2 gap-1 sm:gap-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             <Button size="sm" variant="outline" onClick={() => addItem(product)} className="w-full gap-1 border-primary/20 text-primary hover:bg-primary hover:text-white rounded-lg transition-colors font-medium text-[9px] sm:text-xs h-7 sm:h-8">
               <ShoppingCart className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Add
             </Button>
