@@ -51,13 +51,17 @@ function OrderCard({ order }: { order: Order }) {
     setDlError('');
     try {
       const { data } = await apiClient.post('/download/generate', { orderItemId });
-      const a = document.createElement('a');
-      a.href = data.downloadUrl;
-      a.download = '';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      if (data.type === 'external') {
+        window.open(data.downloadUrl, '_blank');
+      } else {
+        const a = document.createElement('a');
+        a.href = data.downloadUrl;
+        a.download = '';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     } catch (err: any) {
       setDlError(err.response?.data?.error || 'Download failed');
     } finally {
@@ -369,13 +373,17 @@ function DashboardContent() {
                                 : { orderItemId: item.id };
                               apiClient.post('/download/generate', payload)
                                 .then(({ data }) => {
-                                  const a = document.createElement('a');
-                                  a.href = data.downloadUrl;
-                                  a.download = '';
-                                  a.style.display = 'none';
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  document.body.removeChild(a);
+                                  if (data.type === 'external') {
+                                    window.open(data.downloadUrl, '_blank');
+                                  } else {
+                                    const a = document.createElement('a');
+                                    a.href = data.downloadUrl;
+                                    a.download = '';
+                                    a.style.display = 'none';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                  }
                                 })
                                 .catch((err: any) => setLibDlError(err.response?.data?.error || 'Download failed'))
                                 .finally(() => setLibDownloading(null));

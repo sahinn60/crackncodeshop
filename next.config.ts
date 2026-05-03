@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@prisma/client', 'bcryptjs', 'jsonwebtoken', 'pg'],
 
+  // Allow large file uploads (100MB)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '100mb',
+    },
+  },
+
   // Silence Turbopack warning
   turbopack: {},
 

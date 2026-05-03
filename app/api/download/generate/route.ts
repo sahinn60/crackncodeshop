@@ -2,13 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+function classifyUrl(url: string): 'local' | 'external' {
+  // Local server files
+  if (url.includes('/api/download/file/') || url.includes('/api/upload/')) return 'local';
+  // Everything else (Google Drive, Dropbox, Cloudinary, any URL)
+  return 'external';
+}
+
+function fixExternalUrl(url: string): string {
+  // Fix Google Drive view links → direct download
+  const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveMatch) return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+
+  // Fix Dropbox links
+  if (url.includes('dropbox.com') && !url.includes('dl=1')) {
+    return url.replace('dl=0', 'dl=1').replace(/\?$/, '') + (url.includes('?') ? '&dl=1' : '?dl=1');
+  }
+
+  return url;
+}
+
 export async function POST(req: NextRequest) {
   const { error, user } = requireAuth(req);
   if (error) return error;
 
   try {
     const { orderItemId, productId } = await req.json();
-    const origin = req.headers.get('origin') || req.nextUrl.origin;
 
     let fileUrl = '';
 
@@ -35,15 +54,13 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
-    // Route 2: Download via admin-granted access or productId fallback
+    // Route 2: Download via admin-granted access or purchase fallback
     else if (productId) {
-      // Check admin-granted access
       const access = await prisma.userProductAccess.findUnique({
         where: { userId_productId: { userId: user!.id, productId } },
       });
 
       if (!access) {
-        // Fallback: check if user has a completed order
         const orderItem = await prisma.orderItem.findFirst({
           where: { productId, order: { userId: user!.id, status: 'COMPLETED' } },
           include: { product: { select: { fileUrl: true } } },
@@ -63,17 +80,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'orderItemId or productId required' }, { status: 400 });
     }
 
-    // If it's a local file URL (uploaded via /api/upload/file), return as-is
-    if (fileUrl.includes('/api/download/file/')) {
-      return NextResponse.json({ downloadUrl: fileUrl });
+    const type = classifyUrl(fileUrl);
+
+    if (type === 'local') {
+      // Local server file — return direct URL
+      return NextResponse.json({ downloadUrl: fileUrl, type: 'download' });
     }
 
-    // For external URLs (Cloudinary, Google Drive, etc), proxy through our server
-    // Extract filename from URL
-    const filename = fileUrl.split('/').pop()?.split('?')[0] || 'file';
-    return NextResponse.json({
-      downloadUrl: `${origin}/api/download/proxy?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(filename)}`,
-    });
+    // External URL — fix common link formats and tell frontend to open in new tab
+    const fixedUrl = fixExternalUrl(fileUrl);
+    return NextResponse.json({ downloadUrl: fixedUrl, type: 'external' });
+
   } catch (err: any) {
     console.error('[download/generate] Error:', err?.message);
     return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 });
