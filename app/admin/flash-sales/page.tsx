@@ -32,8 +32,8 @@ export default function AdminFlashSalesPage() {
       apiClient.get('/admin/flash-sales'),
       apiClient.get('/admin/products'),
     ]).then(([{ data: s }, { data: p }]) => {
-      setSales(s);
-      setProducts(p || []);
+      setSales(Array.isArray(s) ? s : []);
+      setProducts(Array.isArray(p) ? p : p.products || []);
     }).finally(() => setIsLoading(false));
   };
   useEffect(() => { load(); }, []);
