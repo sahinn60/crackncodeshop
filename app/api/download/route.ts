@@ -43,34 +43,28 @@ export async function GET(req: NextRequest) {
     await prisma.orderItem.update({ where: { id: dl.orderItemId }, data: { downloadCount: { increment: 1 } } }).catch(() => {});
   }
 
-  const fileUrl = dl.product.fileUrl;
+  // Build filename
+  const ext = dl.product.fileUrl.split('.').pop()?.split('?')[0] || 'file';
+  const safeName = dl.product.title.replace(/[^a-zA-Z0-9_\- ]/g, '_').replace(/\s+/g, '_').slice(0, 80);
+  const fileName = `${safeName}.${ext}`;
 
-  // For Cloudinary URLs: add fl_attachment to force download
-  if (fileUrl.includes('cloudinary.com')) {
-    const attachmentUrl = fileUrl.includes('/upload/')
-      ? fileUrl.replace('/upload/', '/upload/fl_attachment/')
-      : fileUrl;
-    // Extract filename from URL or use product title
-    const ext = fileUrl.split('.').pop()?.split('?')[0] || 'file';
-    const safeName = dl.product.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
-    const fileName = `${safeName}.${ext}`;
+  try {
+    // Proxy: fetch file from Cloudinary/external and stream it to the user
+    const fileRes = await fetch(dl.product.fileUrl);
+    if (!fileRes.ok) return NextResponse.json({ error: 'Failed to fetch file from storage' }, { status: 502 });
 
-    return new NextResponse(null, {
-      status: 302,
+    const contentType = fileRes.headers.get('content-type') || 'application/octet-stream';
+
+    return new NextResponse(fileRes.body, {
+      status: 200,
       headers: {
-        Location: attachmentUrl,
+        'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="${fileName}"`,
-        'Cache-Control': 'no-store',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
+  } catch (err) {
+    console.error('[download] Proxy error:', err);
+    return NextResponse.json({ error: 'Download failed' }, { status: 500 });
   }
-
-  // For non-Cloudinary URLs (Google Drive, etc): proxy or redirect
-  return new NextResponse(null, {
-    status: 302,
-    headers: {
-      Location: fileUrl,
-      'Cache-Control': 'no-store',
-    },
-  });
 }
