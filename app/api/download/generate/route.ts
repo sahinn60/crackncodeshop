@@ -86,15 +86,11 @@ export async function POST(req: NextRequest) {
       if ((totalDownloads._sum.usedCount || 0) >= limit)
         return NextResponse.json({ error: `Download limit reached (${limit}). Contact support.` }, { status: 429 });
 
-      // Find an existing orderItem to satisfy the FK, or create a dummy reference
+      // Find an existing orderItem to satisfy the FK
       const existingOrderItem = await prisma.orderItem.findFirst({
-        where: { productId, order: { userId: user!.id } },
+        where: { productId, order: { userId: user!.id, status: 'COMPLETED' } },
         select: { id: true },
       });
-
-      if (!existingOrderItem) {
-        return NextResponse.json({ error: 'No order found for this product. Contact support.' }, { status: 400 });
-      }
 
       const token = generateToken();
       const dl = await prisma.downloadToken.create({
@@ -102,7 +98,7 @@ export async function POST(req: NextRequest) {
           token,
           userId: user!.id,
           productId,
-          orderItemId: existingOrderItem.id,
+          orderItemId: existingOrderItem?.id ?? null,
           maxUses: 1,
           expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         },

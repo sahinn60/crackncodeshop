@@ -113,18 +113,18 @@ model RefreshToken {
 }
 
 model DownloadToken {
-  id          String    @id @default(cuid())
-  token       String    @unique @default(cuid())
+  id          String     @id @default(cuid())
+  token       String     @unique @default(cuid())
   userId      String
   productId   String
-  orderItemId String
-  usedCount   Int       @default(0)
-  maxUses     Int       @default(5)
+  orderItemId String?
+  usedCount   Int        @default(0)
+  maxUses     Int        @default(5)
   expiresAt   DateTime
-  createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product   @relation(fields: [productId], references: [id])
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product     Product    @relation(fields: [productId], references: [id])
+  orderItem   OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([userId])
