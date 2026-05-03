@@ -69,7 +69,9 @@ export async function GET(req: NextRequest) {
     })
     .filter(Boolean);
 
-  return NextResponse.json({ sales: result, serverTime: Date.now() }, {
+  const serverTime = Date.now();
+
+  return NextResponse.json(result.map(s => s ? { ...s, serverTime } : null).filter(Boolean), {
     headers: { 'Cache-Control': 'no-store, max-age=0' },
   });
 }

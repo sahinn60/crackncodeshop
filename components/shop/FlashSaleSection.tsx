@@ -27,8 +27,9 @@ export function FlashSaleSection() {
 
   useEffect(() => {
     apiClient.get('/flash-sales').then(({ data }) => {
-      setSales(data.sales || data);
-      if (data.serverTime) setServerTime(data.serverTime);
+      const list = Array.isArray(data) ? data : data.sales || [];
+      setSales(list);
+      if (list[0]?.serverTime) setServerTime(list[0].serverTime);
     }).catch(() => {});
   }, []);
 
