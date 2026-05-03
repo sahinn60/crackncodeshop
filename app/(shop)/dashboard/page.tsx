@@ -51,7 +51,7 @@ function OrderCard({ order }: { order: Order }) {
     setDlError('');
     try {
       const { data } = await apiClient.post('/download/generate', { orderItemId });
-      window.open(data.downloadUrl, '_blank');
+      window.location.href = data.downloadUrl;
     } catch (err: any) {
       setDlError(err.response?.data?.error || 'Download failed');
     } finally {
@@ -362,7 +362,7 @@ function DashboardContent() {
                                 ? { productId: item.product.id }
                                 : { orderItemId: item.id };
                               apiClient.post('/download/generate', payload)
-                                .then(({ data }) => window.open(data.downloadUrl, '_blank'))
+                                .then(({ data }) => { window.location.href = data.downloadUrl; })
                                 .catch((err: any) => setLibDlError(err.response?.data?.error || 'Download failed'))
                                 .finally(() => setLibDownloading(null));
                             }}

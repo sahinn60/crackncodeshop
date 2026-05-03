@@ -14,18 +14,12 @@ export async function GET(req: NextRequest) {
 
   if (!dl) return NextResponse.json({ error: 'Invalid download link' }, { status: 404 });
 
-  // Check user auth — skip if token is valid (token is already user-scoped)
-  // Auth header won't be present when browser opens URL in new tab
-
-  // Check expiry
   if (new Date() > dl.expiresAt)
     return NextResponse.json({ error: 'Download link expired. Request a new one from your dashboard.' }, { status: 410 });
 
-  // Check download limit
   if (dl.usedCount >= dl.maxUses)
     return NextResponse.json({ error: `Download limit reached (${dl.maxUses} downloads).` }, { status: 429 });
 
-  // Check access — either via order or admin grant
   if (dl.orderItemId) {
     const orderItem = await prisma.orderItem.findUnique({
       where: { id: dl.orderItemId },
@@ -34,14 +28,12 @@ export async function GET(req: NextRequest) {
     if (orderItem && orderItem.order.status !== 'COMPLETED')
       return NextResponse.json({ error: 'Order not completed' }, { status: 403 });
   } else {
-    // Admin-granted access — verify it still exists
     const access = await prisma.userProductAccess.findUnique({
       where: { userId_productId: { userId: dl.userId, productId: dl.productId } },
     });
     if (!access) return NextResponse.json({ error: 'Access revoked' }, { status: 403 });
   }
 
-  // Check file URL
   if (!dl.product.fileUrl)
     return NextResponse.json({ error: 'File not available.' }, { status: 404 });
 
@@ -51,9 +43,34 @@ export async function GET(req: NextRequest) {
     await prisma.orderItem.update({ where: { id: dl.orderItemId }, data: { downloadCount: { increment: 1 } } }).catch(() => {});
   }
 
-  const fileUrl = dl.product.fileUrl.includes('?')
-    ? `${dl.product.fileUrl}&dl=${Date.now()}`
-    : `${dl.product.fileUrl}?dl=${Date.now()}`;
+  const fileUrl = dl.product.fileUrl;
 
-  return NextResponse.redirect(fileUrl, { status: 302 });
+  // For Cloudinary URLs: add fl_attachment to force download
+  if (fileUrl.includes('cloudinary.com')) {
+    const attachmentUrl = fileUrl.includes('/upload/')
+      ? fileUrl.replace('/upload/', '/upload/fl_attachment/')
+      : fileUrl;
+    // Extract filename from URL or use product title
+    const ext = fileUrl.split('.').pop()?.split('?')[0] || 'file';
+    const safeName = dl.product.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+    const fileName = `${safeName}.${ext}`;
+
+    return new NextResponse(null, {
+      status: 302,
+      headers: {
+        Location: attachmentUrl,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
+  // For non-Cloudinary URLs (Google Drive, etc): proxy or redirect
+  return new NextResponse(null, {
+    status: 302,
+    headers: {
+      Location: fileUrl,
+      'Cache-Control': 'no-store',
+    },
+  });
 }
