@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
     })
     .filter(Boolean);
 
-  return NextResponse.json(result, {
+  return NextResponse.json({ sales: result, serverTime: Date.now() }, {
     headers: { 'Cache-Control': 'no-store, max-age=0' },
   });
 }

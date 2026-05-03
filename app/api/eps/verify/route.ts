@@ -88,7 +88,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid user in payment data' }, { status: 400 });
 
     const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
-    const expectedTotal = products.reduce((sum, p) => sum + p.price, 0);
+
+    // Calculate expected total with flash sale discounts
+    const now = new Date();
+    const activeSales = await prisma.flashSale.findMany({
+      where: { isActive: true },
+      include: { items: { select: { productId: true } } },
+    });
+    const flashPriceMap = new Map<string, number>();
+    for (const sale of activeSales) {
+      let isLive = false;
+      if (sale.isDaily) {
+        isLive = true;
+      } else if (sale.startTime && sale.endTime) {
+        isLive = now >= sale.startTime && now <= sale.endTime;
+      }
+      if (!isLive || sale.discountPercentage <= 0) continue;
+      for (const item of sale.items) {
+        const product = products.find(p => p.id === item.productId);
+        if (product) {
+          const salePrice = product.price * (1 - sale.discountPercentage / 100);
+          const existing = flashPriceMap.get(item.productId);
+          if (!existing || salePrice < existing) flashPriceMap.set(item.productId, salePrice);
+        }
+      }
+    }
+    const expectedTotal = products.reduce((sum, p) => sum + (flashPriceMap.get(p.id) ?? p.price), 0);
 
     // Allow small tolerance for coupon discounts — total from EPS should be <= expected
     const epsAmount = parseFloat(data.TotalAmount || data.totalAmount || data.Amount || data.amount || '0');
@@ -107,7 +132,7 @@ export async function POST(req: NextRequest) {
         status: 'COMPLETED',
         epsTransactionId: data.EPSTransactionId || data.epsTransactionId || epsTransactionId || '',
         epsMerchantTxId: data.MerchantTransactionId || merchantTransactionId || '',
-        items: { create: products.map(p => ({ productId: p.id, price: p.price })) },
+        items: { create: products.map(p => ({ productId: p.id, price: flashPriceMap.get(p.id) ?? p.price })) },
       },
       include: { items: true },
     });

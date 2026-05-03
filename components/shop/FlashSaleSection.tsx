@@ -21,11 +21,15 @@ interface FlashSale {
 
 export function FlashSaleSection() {
   const [sales, setSales] = useState<FlashSale[]>([]);
+  const [serverTime, setServerTime] = useState<number>(Date.now());
   const { addItem } = useCartStore();
   const router = useRouter();
 
   useEffect(() => {
-    apiClient.get('/flash-sales').then(({ data }) => setSales(data)).catch(() => {});
+    apiClient.get('/flash-sales').then(({ data }) => {
+      setSales(data.sales || data);
+      if (data.serverTime) setServerTime(data.serverTime);
+    }).catch(() => {});
   }, []);
 
   if (sales.length === 0) return null;
@@ -64,7 +68,7 @@ export function FlashSaleSection() {
 
                 {/* Row 2: Timer + Shop All */}
                 <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-5">
-                  <FlashSaleCountdown endTime={sale.endTime} isDaily={sale.isDaily} />
+                  <FlashSaleCountdown endTime={sale.endTime} isDaily={sale.isDaily} serverTime={serverTime} />
                   <Link
                     href="/products"
                     className="flex sm:flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-white/10 border border-white/10 text-white/80 text-[11px] sm:text-xs font-medium hover:bg-white/15 hover:text-white transition-all"

@@ -16,7 +16,33 @@ export async function POST(req: NextRequest) {
   if (products.length === 0)
     return NextResponse.json({ error: 'No valid products found' }, { status: 404 });
 
-  let total = products.reduce((sum, p) => sum + p.price, 0);
+  // Check active flash sales and apply discounts server-side
+  const now = new Date();
+  const activeSales = await prisma.flashSale.findMany({
+    where: { isActive: true },
+    include: { items: { select: { productId: true } } },
+  });
+
+  const flashPriceMap = new Map<string, number>();
+  for (const sale of activeSales) {
+    let isLive = false;
+    if (sale.isDaily) {
+      isLive = true;
+    } else if (sale.startTime && sale.endTime) {
+      isLive = now >= sale.startTime && now <= sale.endTime;
+    }
+    if (!isLive || sale.discountPercentage <= 0) continue;
+    for (const item of sale.items) {
+      const product = products.find(p => p.id === item.productId);
+      if (product) {
+        const salePrice = product.price * (1 - sale.discountPercentage / 100);
+        const existing = flashPriceMap.get(item.productId);
+        if (!existing || salePrice < existing) flashPriceMap.set(item.productId, salePrice);
+      }
+    }
+  }
+
+  let total = products.reduce((sum, p) => sum + (flashPriceMap.get(p.id) ?? p.price), 0);
 
   // Apply coupon discount
   if (couponCode) {

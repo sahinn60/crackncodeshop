@@ -17,12 +17,30 @@ function getBDEndOfDayMs(): number {
 interface Props {
   endTime: string;
   isDaily: boolean;
+  serverTime?: number; // server timestamp in ms
 }
 
-export function FlashSaleCountdown({ endTime, isDaily }: Props) {
+export function FlashSaleCountdown({ endTime, isDaily, serverTime }: Props) {
+  // Calculate offset between server and client clock (server - client)
+  const offsetRef = useRef(serverTime ? serverTime - Date.now() : 0);
+
+  // Corrected "now" using server offset
+  const correctedNow = useCallback(() => Date.now() + offsetRef.current, []);
+
   const getRemaining = useCallback(() => {
-    const target = isDaily ? getBDEndOfDayMs() : new Date(endTime).getTime();
-    const diff = Math.max(0, target - Date.now());
+    const now = correctedNow();
+    let target: number;
+    if (isDaily) {
+      // Recalculate BD end-of-day using corrected time
+      const corrected = new Date(now);
+      const utcMs = corrected.getTime() + corrected.getTimezoneOffset() * 60000;
+      const bd = new Date(utcMs + BD_OFFSET * 60000);
+      bd.setHours(23, 59, 59, 999);
+      target = bd.getTime() - BD_OFFSET * 60000;
+    } else {
+      target = new Date(endTime).getTime();
+    }
+    const diff = Math.max(0, target - now);
     if (diff <= 0) return { h: 0, m: 0, s: 0, total: 0 };
     return {
       h: Math.floor(diff / 3600000),
@@ -30,21 +48,43 @@ export function FlashSaleCountdown({ endTime, isDaily }: Props) {
       s: Math.floor((diff % 60000) / 1000),
       total: diff,
     };
-  }, [endTime, isDaily]);
+  }, [endTime, isDaily, correctedNow]);
 
   const [time, setTime] = useState(getRemaining);
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
     const tick = setInterval(() => {
       const t = getRemaining();
-      if (t.total <= 0 && isDaily) {
-        setTime({ h: 23, m: 59, s: 59, total: 86399000 });
+      if (t.total <= 0) {
+        if (isDaily) {
+          // Daily sale: reset for next day cycle
+          setTime({ h: 23, m: 59, s: 59, total: 86399000 });
+        } else {
+          setExpired(true);
+          clearInterval(tick);
+          setTime({ h: 0, m: 0, s: 0, total: 0 });
+        }
       } else {
         setTime(t);
       }
     }, 1000);
     return () => clearInterval(tick);
   }, [getRemaining, isDaily]);
+
+  // Re-sync with server every 5 minutes to prevent drift
+  useEffect(() => {
+    const sync = setInterval(async () => {
+      try {
+        const res = await fetch('/api/time');
+        const { serverTime: st } = await res.json();
+        offsetRef.current = st - Date.now();
+      } catch {}
+    }, 5 * 60 * 1000);
+    return () => clearInterval(sync);
+  }, []);
+
+  if (expired) return null;
 
   const urgent = time.h < 1;
   const prevRef = useRef({ h: '', m: '', s: '' });
