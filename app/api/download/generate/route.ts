@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!orderItem.product.fileUrl) return NextResponse.json({ error: 'File not available yet' }, { status: 404 });
 
     const totalDownloads = await prisma.downloadToken.aggregate({
-      where: { orderItemId },
+      where: { orderItemId, usedCount: { gt: 0 } },
       _sum: { usedCount: true },
     });
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     if (!product || !product.fileUrl) return NextResponse.json({ error: 'File not available' }, { status: 404 });
 
     const totalDownloads = await prisma.downloadToken.aggregate({
-      where: { productId, userId: user!.id },
+      where: { productId, userId: user!.id, usedCount: { gt: 0 } },
       _sum: { usedCount: true },
     });
 
