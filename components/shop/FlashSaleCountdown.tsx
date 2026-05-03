@@ -1,88 +1,86 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
-const BD_OFFSET = 6 * 60;
+const BD_OFFSET_MS = 6 * 60 * 60 * 1000; // UTC+6
 
-function getBDEndOfDayMs(): number {
-  const now = new Date();
-  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
-  const bd = new Date(utcMs + BD_OFFSET * 60000);
-  bd.setHours(23, 59, 59, 999);
-  return bd.getTime() - BD_OFFSET * 60000;
+// Get BD end-of-day (23:59:59.999 BD time) as a UTC timestamp
+function getBDEndOfDay(nowUtcMs: number): number {
+  // Convert UTC ms to BD local ms
+  const bdMs = nowUtcMs + BD_OFFSET_MS;
+  const bdDate = new Date(bdMs);
+  // Set to end of BD day in "fake UTC" space
+  const endOfBD = Date.UTC(
+    bdDate.getUTCFullYear(),
+    bdDate.getUTCMonth(),
+    bdDate.getUTCDate(),
+    23, 59, 59, 999
+  );
+  // Convert back to real UTC
+  return endOfBD - BD_OFFSET_MS;
 }
 
 interface Props {
   endTime: string;
   isDaily: boolean;
-  serverTime?: number; // server timestamp in ms
+  serverTime?: number;
 }
 
 export function FlashSaleCountdown({ endTime, isDaily, serverTime }: Props) {
-  // Calculate offset between server and client clock (server - client)
+  // Offset = how far ahead/behind the server is vs client
   const offsetRef = useRef(serverTime ? serverTime - Date.now() : 0);
 
-  // Corrected "now" using server offset
-  const correctedNow = useCallback(() => Date.now() + offsetRef.current, []);
-
-  const getRemaining = useCallback(() => {
-    const now = correctedNow();
-    let target: number;
-    if (isDaily) {
-      // Recalculate BD end-of-day using corrected time
-      const corrected = new Date(now);
-      const utcMs = corrected.getTime() + corrected.getTimezoneOffset() * 60000;
-      const bd = new Date(utcMs + BD_OFFSET * 60000);
-      bd.setHours(23, 59, 59, 999);
-      target = bd.getTime() - BD_OFFSET * 60000;
-    } else {
-      target = new Date(endTime).getTime();
-    }
-    const diff = Math.max(0, target - now);
-    if (diff <= 0) return { h: 0, m: 0, s: 0, total: 0 };
+  const calcTime = () => {
+    const nowUtc = Date.now() + offsetRef.current;
+    const target = isDaily ? getBDEndOfDay(nowUtc) : new Date(endTime).getTime();
+    const diff = Math.max(0, target - nowUtc);
     return {
       h: Math.floor(diff / 3600000),
       m: Math.floor((diff % 3600000) / 60000),
       s: Math.floor((diff % 60000) / 1000),
       total: diff,
     };
-  }, [endTime, isDaily, correctedNow]);
+  };
 
-  const [time, setTime] = useState(getRemaining);
+  const [time, setTime] = useState(calcTime);
   const [expired, setExpired] = useState(false);
 
+  // Main tick — runs every second
   useEffect(() => {
-    const tick = setInterval(() => {
-      const t = getRemaining();
-      if (t.total <= 0) {
-        if (isDaily) {
-          // Daily sale: reset for next day cycle
-          setTime({ h: 23, m: 59, s: 59, total: 86399000 });
-        } else {
-          setExpired(true);
-          clearInterval(tick);
-          setTime({ h: 0, m: 0, s: 0, total: 0 });
-        }
+    const id = setInterval(() => {
+      const t = calcTime();
+      if (t.total <= 0 && !isDaily) {
+        setExpired(true);
+        setTime({ h: 0, m: 0, s: 0, total: 0 });
+        clearInterval(id);
       } else {
+        // For daily: calcTime() automatically targets the NEXT BD midnight,
+        // so it never gets stuck — no static 23:59:59 needed
         setTime(t);
       }
     }, 1000);
-    return () => clearInterval(tick);
-  }, [getRemaining, isDaily]);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endTime, isDaily]);
 
-  // Re-sync with server every 5 minutes to prevent drift
+  // Re-sync with server every 5 minutes
   useEffect(() => {
-    const sync = setInterval(async () => {
+    const id = setInterval(async () => {
       try {
         const res = await fetch('/api/time');
         const { serverTime: st } = await res.json();
         offsetRef.current = st - Date.now();
       } catch {}
     }, 5 * 60 * 1000);
-    return () => clearInterval(sync);
+    return () => clearInterval(id);
   }, []);
+
+  // Sync offset if serverTime prop changes
+  useEffect(() => {
+    if (serverTime) offsetRef.current = serverTime - Date.now();
+  }, [serverTime]);
 
   if (expired) return null;
 
@@ -103,9 +101,7 @@ export function FlashSaleCountdown({ endTime, isDaily, serverTime }: Props) {
             <span className={`text-xs sm:text-sm font-light ${urgent ? 'text-primary' : 'text-white/25'}`}>:</span>
           )}
           <div className={`flex flex-col items-center justify-center w-10 h-[46px] sm:w-12 sm:h-14 rounded-lg sm:rounded-xl transition-all ${
-            urgent
-              ? 'shadow-[0_0_12px_rgba(255,45,45,0.15)]'
-              : ''
+            urgent ? 'shadow-[0_0_12px_rgba(255,45,45,0.15)]' : ''
           }`} style={{
             background: urgent ? 'rgba(255,45,45,0.08)' : 'rgba(255,255,255,0.06)',
             border: `1px solid ${urgent ? 'rgba(255,45,45,0.25)' : 'rgba(255,255,255,0.1)'}`,
