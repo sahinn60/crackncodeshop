@@ -57,23 +57,21 @@ function FileUpload({ value, onChange }: { value: string; onChange: (url: string
 
     setUploading(true); setProgress(0); setError('');
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dxhezbur2';
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'crackncode_unsigned');
-    formData.append('folder', 'crackncode/files');
-    formData.append('resource_type', 'raw');
 
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : '';
     const xhr = new XMLHttpRequest();
     xhrRef.current = xhr;
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`);
+    xhr.open('POST', '/api/upload/file');
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100)); };
     xhr.onload = () => {
       xhrRef.current = null; setUploading(false);
       if (xhr.status >= 200 && xhr.status < 300) {
-        try { onChange(JSON.parse(xhr.responseText).secure_url); } catch { setError('Failed to parse upload response.'); }
+        try { onChange(JSON.parse(xhr.responseText).url); } catch { setError('Failed to parse upload response.'); }
       } else {
-        try { setError(JSON.parse(xhr.responseText)?.error?.message || `Upload failed (${xhr.status})`); } catch { setError(`Upload failed (${xhr.status})`); }
+        try { setError(JSON.parse(xhr.responseText)?.error || `Upload failed (${xhr.status})`); } catch { setError(`Upload failed (${xhr.status})`); }
       }
     };
     xhr.onerror = () => { xhrRef.current = null; setUploading(false); setError('Network error.'); };

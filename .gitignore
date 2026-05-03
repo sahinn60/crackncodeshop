@@ -46,3 +46,7 @@ next-env.d.ts
 /lib/generated/prisma
 dev.log
 app.log
+
+# uploaded product files
+/uploads/*
+!/uploads/.gitkeep

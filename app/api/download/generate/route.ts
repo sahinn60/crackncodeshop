@@ -8,6 +8,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { orderItemId, productId } = await req.json();
+    const origin = req.headers.get('origin') || req.nextUrl.origin;
+
+    let fileUrl = '';
 
     // Route 1: Download via purchase (orderItemId)
     if (orderItemId) {
@@ -15,7 +18,7 @@ export async function POST(req: NextRequest) {
         where: { id: orderItemId },
         include: {
           order: { select: { userId: true, status: true } },
-          product: { select: { id: true, title: true, downloadLimit: true, fileUrl: true } },
+          product: { select: { id: true, title: true, fileUrl: true } },
         },
       });
 
@@ -24,44 +27,53 @@ export async function POST(req: NextRequest) {
       if (orderItem.order.status !== 'COMPLETED') return NextResponse.json({ error: 'Order not completed' }, { status: 403 });
       if (!orderItem.product.fileUrl) return NextResponse.json({ error: 'File not available yet' }, { status: 404 });
 
-      // Track download count
+      fileUrl = orderItem.product.fileUrl;
+
       await prisma.orderItem.update({
         where: { id: orderItemId },
         data: { downloadCount: { increment: 1 } },
       }).catch(() => {});
-
-      return NextResponse.json({ downloadUrl: orderItem.product.fileUrl });
     }
 
-    // Route 2: Download via admin-granted access (productId)
-    if (productId) {
+    // Route 2: Download via admin-granted access or productId fallback
+    else if (productId) {
+      // Check admin-granted access
       const access = await prisma.userProductAccess.findUnique({
         where: { userId_productId: { userId: user!.id, productId } },
       });
 
       if (!access) {
-        // Also check if user has a completed order for this product
+        // Fallback: check if user has a completed order
         const orderItem = await prisma.orderItem.findFirst({
           where: { productId, order: { userId: user!.id, status: 'COMPLETED' } },
           include: { product: { select: { fileUrl: true } } },
         });
-        if (!orderItem || !orderItem.product.fileUrl)
+        if (!orderItem?.product.fileUrl)
           return NextResponse.json({ error: 'No access to this product' }, { status: 403 });
-
-        return NextResponse.json({ downloadUrl: orderItem.product.fileUrl });
+        fileUrl = orderItem.product.fileUrl;
+      } else {
+        const product = await prisma.product.findUnique({
+          where: { id: productId },
+          select: { fileUrl: true },
+        });
+        if (!product?.fileUrl) return NextResponse.json({ error: 'File not available' }, { status: 404 });
+        fileUrl = product.fileUrl;
       }
-
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: { fileUrl: true },
-      });
-
-      if (!product || !product.fileUrl) return NextResponse.json({ error: 'File not available' }, { status: 404 });
-
-      return NextResponse.json({ downloadUrl: product.fileUrl });
+    } else {
+      return NextResponse.json({ error: 'orderItemId or productId required' }, { status: 400 });
     }
 
-    return NextResponse.json({ error: 'orderItemId or productId required' }, { status: 400 });
+    // If it's a local file URL (uploaded via /api/upload/file), return as-is
+    if (fileUrl.includes('/api/download/file/')) {
+      return NextResponse.json({ downloadUrl: fileUrl });
+    }
+
+    // For external URLs (Cloudinary, Google Drive, etc), proxy through our server
+    // Extract filename from URL
+    const filename = fileUrl.split('/').pop()?.split('?')[0] || 'file';
+    return NextResponse.json({
+      downloadUrl: `${origin}/api/download/proxy?url=${encodeURIComponent(fileUrl)}&name=${encodeURIComponent(filename)}`,
+    });
   } catch (err: any) {
     console.error('[download/generate] Error:', err?.message);
     return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 });
