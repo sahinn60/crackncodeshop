@@ -63,7 +63,6 @@ function FileUpload({ value, onChange }: { value: string; onChange: (url: string
     formData.append('upload_preset', 'crackncode_unsigned');
     formData.append('folder', 'crackncode/files');
     formData.append('resource_type', 'raw');
-    formData.append('access_mode', 'public');
 
     const xhr = new XMLHttpRequest();
     xhrRef.current = xhr;
