@@ -8,10 +8,10 @@ export function VisitorTracker() {
   const countryRef = useRef('');
 
   useEffect(() => {
-    // Fetch country once
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(d => { countryRef.current = d.country_name || ''; })
+    // Use server-side visitor API to get country (avoids CORS issues with third-party APIs)
+    fetch('/api/visitors/country')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.country) countryRef.current = d.country; })
       .catch(() => {});
   }, []);
 
