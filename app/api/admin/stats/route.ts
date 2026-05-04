@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
       totalUsers, totalProducts, allOrders, rangeOrders, rangeUsers,
       topProductsRaw, totalCategories, rangeReviews, allReviews,
       recentOrders, recentReviews, visitors, monthOrders, allProducts,
+      topCartProducts,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.product.count(),
@@ -50,6 +51,12 @@ export async function GET(req: NextRequest) {
       prisma.analytics.findMany({ where: dateFilterAnalytics, select: { date: true, ip: true, device: true, path: true } }),
       prisma.order.findMany({ where: { createdAt: { gte: monthAgo } }, select: { total: true } }),
       prisma.product.findMany({ select: { category: true, price: true } }),
+      prisma.product.findMany({
+        where: { cartCount: { gt: 0 } },
+        take: 10,
+        orderBy: { cartCount: 'desc' },
+        select: { id: true, title: true, category: true, price: true, cartCount: true, imageUrl: true },
+      }),
     ]);
 
     // KPIs
@@ -172,6 +179,7 @@ export async function GET(req: NextRequest) {
       // Tables
       recentOrders,
       topProducts: topProductsRaw,
+      topCartProducts,
       recentReviews,
 
       // Review analytics

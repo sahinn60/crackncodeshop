@@ -26,6 +26,13 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
 
       addItem: (product, silent) => {
+        // Track cart add (fire-and-forget, non-blocking)
+        fetch('/api/products/cart-track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id }),
+        }).catch(() => {});
+
         set(state => {
           const existing = state.items.find(i => i.id === product.id);
           if (existing) {

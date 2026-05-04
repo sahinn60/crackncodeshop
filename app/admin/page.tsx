@@ -34,6 +34,7 @@ interface Stats {
   chartData: { name: string; sales: number }[];
   recentOrders: { id: string; total: number; status: string; createdAt: string; user: { name: string; email: string }; items: { product: { title: string } }[] }[];
   topProducts: { title: string; category: string; price: number; reviewCount: number }[];
+  topCartProducts: { id: string; title: string; category: string; price: number; cartCount: number; imageUrl: string }[];
   recentReviews: { id: string; rating: number; comment: string; createdAt: string; user: { name: string }; product: { title: string } }[];
   orderStatusData: { status: string; count: number }[];
   monthlyRevenue: { month: string; revenue: number; orders: number }[];
@@ -278,7 +279,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Recent Orders + Top Products */}
+      {/* Recent Orders + Top Products + Cart Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -328,6 +329,52 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Cart Activity — Top Products by Add to Cart */}
+      {stats?.topCartProducts && stats.topCartProducts.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-indigo-500" /> Cart Activity — Most Added Products
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+            {stats.topCartProducts.slice(0, 5).map((p, i) => (
+              <div key={p.id} className="px-5 py-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`text-xs font-bold ${i < 3 ? 'text-amber-500' : 'text-gray-400'}`}>
+                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                  </span>
+                  {p.imageUrl && <img src={p.imageUrl} alt="" className="h-8 w-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" />}
+                </div>
+                <p className="text-sm font-medium text-gray-900 truncate">{p.title}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{p.category}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs font-medium text-gray-500"><Price amount={p.price} /></span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                    <ShoppingCart className="h-2.5 w-2.5" /> {p.cartCount}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {stats.topCartProducts.length > 5 && (
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50">
+              <div className="space-y-2">
+                {stats.topCartProducts.slice(5).map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[10px] font-bold text-gray-400 w-5">#{i + 6}</span>
+                      <span className="text-xs text-gray-700 truncate">{p.title}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-indigo-600 flex-shrink-0">{p.cartCount} adds</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Recent Reviews */}
       {stats?.recentReviews && stats.recentReviews.length > 0 && (
