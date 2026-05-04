@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin, requireAdminOrSubAdmin, getAuthUser } from '@/lib/auth';
+import { sanitizeText, sanitizeNumber } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,9 +93,9 @@ export async function POST(req: NextRequest) {
 
     const product = await prisma.product.create({
       data: {
-        title: String(data.title).trim().slice(0, 200),
-        description: String(data.description || '').trim().slice(0, 1000),
-        longDescription: String(data.longDescription || '').trim().slice(0, 10000),
+        title: sanitizeText(data.title, 200),
+        description: sanitizeText(data.description, 1000),
+        longDescription: sanitizeText(data.longDescription, 10000),
         price,
         oldPrice,
         imageUrl: String(data.imageUrl || '').trim().slice(0, 500),

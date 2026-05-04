@@ -64,6 +64,18 @@ export async function POST(req: NextRequest) {
   const merchantTransactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const customerOrderId = `ORD${Date.now()}`;
 
+  // Record coupon usage before payment (prevents reuse during payment flow)
+  if (couponCode) {
+    const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.trim().toUpperCase() } });
+    if (coupon) {
+      await prisma.couponUsage.upsert({
+        where: { couponId_userId: { couponId: coupon.id, userId: user!.id } },
+        create: { couponId: coupon.id, userId: user!.id },
+        update: {},
+      }).catch(() => {});
+    }
+  }
+
   // Use the request origin so EPS redirects back to the correct domain
   // (works for both localhost and production)
   const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/[^/]*$/, '') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

@@ -220,25 +220,40 @@ model UpsellRule {
 }
 
 model Coupon {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   title     String
-  code      String   @unique
-  discount  String   // e.g. "20%" or "50 BDT"
-  message   String   // display message e.g. "Spring Sale: 20% OFF"
-  isActive  Boolean  @default(true)
-  priority  Int      @default(0)
-  startDate DateTime @default(now())
+  code      String        @unique
+  discount  String
+  message   String
+  isActive  Boolean       @default(true)
+  priority  Int           @default(0)
+  maxUses   Int           @default(0) // 0 = unlimited
+  startDate DateTime      @default(now())
   endDate   DateTime?
-  emoji     String   @default("🔥")
-  barColor  String   @default("#DC2626")
-  textColor String   @default("#FFFFFF")
-  showTimer Boolean  @default(true)
-  speedDesktop Int    @default(47)
-  speedMobile  Int    @default(70)
-  createdAt DateTime @default(now())
+  emoji     String        @default("🔥")
+  barColor  String        @default("#DC2626")
+  textColor String        @default("#FFFFFF")
+  showTimer Boolean       @default(true)
+  speedDesktop Int        @default(47)
+  speedMobile  Int        @default(70)
+  createdAt DateTime      @default(now())
+  usages    CouponUsage[]
 
   @@index([isActive])
   @@index([priority])
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String
+  orderId   String   @default("")
+  usedAt    DateTime @default(now())
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, userId])
+  @@index([couponId])
+  @@index([userId])
 }
 
 model Settings {

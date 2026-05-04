@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { signAccessToken, signRefreshToken } from '@/lib/jwt';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+  const { success: rlOk } = rateLimit(`refresh:${ip}`, 15, 60_000);
+  if (!rlOk) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   const { refreshToken } = await req.json();
   if (!refreshToken) return NextResponse.json({ error: 'Refresh token required' }, { status: 400 });
 
