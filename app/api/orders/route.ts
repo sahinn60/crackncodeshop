@@ -36,13 +36,16 @@ export async function POST(req: NextRequest) {
   const { error, user } = requireAuth(req);
   if (error) return error;
 
+  try {
   const body = await req.json();
   const { productIds } = body;
 
   if (!Array.isArray(productIds) || productIds.length === 0)
     return NextResponse.json({ error: 'productIds must be a non-empty array' }, { status: 400 });
+  if (productIds.length > 50)
+    return NextResponse.json({ error: 'Maximum 50 products per order' }, { status: 400 });
 
-  const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+  const products = await prisma.product.findMany({ where: { id: { in: productIds }, isPublished: true } });
   if (products.length === 0)
     return NextResponse.json({ error: 'No valid products found' }, { status: 404 });
 
@@ -82,4 +85,8 @@ export async function POST(req: NextRequest) {
     include: { items: { include: { product: true } } },
   });
   return NextResponse.json(order, { status: 201 });
+  } catch (err: any) {
+    console.error('[orders/POST] Error:', err?.message);
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 });
+  }
 }

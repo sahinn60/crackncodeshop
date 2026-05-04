@@ -44,28 +44,34 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <>
       <div className="group flex flex-col rounded-xl sm:rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full">
-        {/* Image container — all overlays stay inside */}
+        {/* Image container */}
         <div className="aspect-square overflow-hidden relative bg-gray-100 rounded-t-xl sm:rounded-t-2xl">
           <Link href={productUrl} className="block w-full h-full">
             <img src={product.imageUrl} alt={product.title} loading="lazy" decoding="async" className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105" />
           </Link>
 
           {/* Top-left badges */}
-          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 pointer-events-none flex flex-col gap-1 z-[2]">
-            <span className="inline-flex items-center rounded-full bg-white/95 px-2 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-xs font-bold uppercase tracking-wider text-primary shadow-sm backdrop-blur-sm">
+          <div
+            style={{ position: 'absolute', top: 6, left: 6, display: 'flex', flexDirection: 'column', gap: 5, zIndex: 5, pointerEvents: 'none', maxWidth: '55%' }}
+          >
+            <span
+              style={{ display: 'inline-block', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#e11d48', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', padding: '3px 7px', borderRadius: 999, lineHeight: 1.2, whiteSpace: 'nowrap' }}
+            >
               {product.category}
             </span>
             {product.isBundle && (
-              <span className="inline-flex items-center rounded-full bg-purple-600 px-2 py-0.5 text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+              <span
+                style={{ display: 'inline-block', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#7c3aed', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', padding: '3px 7px', borderRadius: 999, lineHeight: 1.2, whiteSpace: 'nowrap' }}
+              >
                 Bundle
               </span>
             )}
           </div>
 
-          {/* Discount badge — top-right, always visible */}
+          {/* Discount badge — top-right, always visible on mobile; hidden on desktop hover when icons show */}
           {discountPct > 0 && (
-            <div className="absolute top-2 sm:top-3 right-2 sm:right-3 pointer-events-none z-[3]">
-              <span className="inline-flex items-center rounded-md sm:rounded-lg bg-primary px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-extrabold text-white shadow-md">
+            <div className="absolute top-2 sm:top-3 right-2 sm:right-3 pointer-events-none z-[3] sm:group-hover:opacity-0 transition-opacity duration-200">
+              <span className="inline-flex items-center rounded-md bg-primary/90 backdrop-blur-sm px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white">
                 -{discountPct}%
               </span>
             </div>
@@ -126,8 +132,8 @@ export function ProductCard({ product }: { product: Product }) {
               </button>
               <div className="w-full md:w-1/2 bg-gray-100 relative h-64 md:h-auto">
                 <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
-                <div className="absolute top-4 left-4 z-10">
-                  <span className="inline-flex items-center rounded-full bg-white/95 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary shadow-sm">{product.category}</span>
+                <div className="absolute top-3 left-3 z-10">
+                  <span className="inline-flex items-center rounded-md bg-black/60 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">{product.category}</span>
                 </div>
               </div>
               <div className="w-full md:w-1/2 p-5 sm:p-6 md:p-10 flex flex-col overflow-y-auto">

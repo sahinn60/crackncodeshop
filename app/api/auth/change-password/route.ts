@@ -17,8 +17,14 @@ export async function POST(req: NextRequest) {
     if (!currentPassword || !newPassword) {
       return NextResponse.json({ error: 'Current and new password are required' }, { status: 400 });
     }
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: 'New password must be at least 6 characters' }, { status: 400 });
+    if (newPassword.length < 8) {
+      return NextResponse.json({ error: 'New password must be at least 8 characters' }, { status: 400 });
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      return NextResponse.json({ error: 'Password must contain at least one uppercase letter' }, { status: 400 });
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      return NextResponse.json({ error: 'Password must contain at least one number' }, { status: 400 });
     }
 
     const dbUser = await prisma.user.findUnique({ where: { id: user!.id } });
@@ -27,7 +33,7 @@ export async function POST(req: NextRequest) {
     const valid = await bcrypt.compare(currentPassword, dbUser.password);
     if (!valid) return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
 
-    const hashed = await bcrypt.hash(newPassword, 10);
+    const hashed = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: user!.id }, data: { password: hashed } });
 
     return NextResponse.json({ message: 'Password changed successfully' });

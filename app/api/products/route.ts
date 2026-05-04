@@ -86,6 +86,10 @@ export async function POST(req: NextRequest) {
     // Get author info
     const author = await prisma.user.findUnique({ where: { id: user!.id }, select: { id: true, name: true } });
 
+    // Auto-assign displayOrder (next highest)
+    const maxOrder = await prisma.product.aggregate({ _max: { displayOrder: true } });
+    const nextOrder = (maxOrder._max.displayOrder ?? 0) + 1;
+
     const product = await prisma.product.create({
       data: {
         title: String(data.title).trim().slice(0, 200),
@@ -108,6 +112,7 @@ export async function POST(req: NextRequest) {
         slug,
         authorId: user!.id,
         authorName: author?.name || 'Unknown',
+        displayOrder: nextOrder,
       },
     });
     return NextResponse.json(product, { status: 201 });
