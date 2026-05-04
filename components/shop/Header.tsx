@@ -90,7 +90,7 @@ export function Header() {
         {settings?.logoUrl ? (
           <img src={settings.logoUrl} alt={settings?.siteName || 'Logo'} className="h-8 md:h-12 w-auto max-w-[140px] md:max-w-[200px] object-contain" />
         ) : (
-          <span className="text-lg md:text-2xl font-black tracking-tight text-primary">{settings?.siteName || 'Shop'}</span>
+          <span className="text-lg md:text-2xl font-black tracking-tight"><span className="text-dark">Crackncode</span> <span className="text-primary">Premium</span></span>
         )}
       </Link>
     );
