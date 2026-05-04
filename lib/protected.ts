@@ -1,6 +1,6 @@
 const PROTECTED_EMAILS = [
   'armantamim47@gmail.com',
-  'admin@crackncode.shop',
+  'admin@crackncodepremium.com',
 ];
 
 export function isProtectedUser(email: string): boolean {

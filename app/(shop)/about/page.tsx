@@ -97,7 +97,7 @@ export default function FeaturesPage() {
       {/* Features Grid */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
         <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-bold text-dark">Why choose Crackncode?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-dark">Why choose CrackncodePremium?</h2>
           <p className="mt-3 text-gray-500 max-w-lg mx-auto font-normal">
             We obsess over quality so you can focus on shipping.
           </p>
@@ -209,7 +209,7 @@ export default function FeaturesPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
           <h2 className="text-2xl sm:text-3xl font-bold text-dark mb-4">Ready to get started?</h2>
           <p className="text-gray-600 mb-8">
-            Join thousands of developers and designers who trust Crackncode for premium digital assets.
+            Join thousands of developers and designers who trust CrackncodePremium for premium digital assets.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/products">

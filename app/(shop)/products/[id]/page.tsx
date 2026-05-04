@@ -222,7 +222,7 @@ export default function ProductDetailsPage() {
   if (!product) return null;
 
   const features: string[] = Array.isArray(product.features) ? product.features : [];
-  const productUrl = `https://crackncode.shop/products/${product.slug || id}`;
+  const productUrl = `https://crackncodepremium.com/products/${product.slug || id}`;
 
   // JSON-LD Structured Data
   const jsonLd = {
@@ -232,7 +232,7 @@ export default function ProductDetailsPage() {
     description: product.description,
     image: product.imageUrl,
     url: productUrl,
-    brand: { '@type': 'Brand', name: 'CrackNcode' },
+    brand: { '@type': 'Brand', name: 'CrackncodePremium' },
     offers: {
       '@type': 'Offer',
       price: product.price,

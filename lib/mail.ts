@@ -21,9 +21,9 @@ export async function sendPasswordResetEmail(to: string, token: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: process.env.RESEND_FROM || 'Crackncode Shop <onboarding@resend.dev>',
+      from: process.env.RESEND_FROM || 'CrackncodePremium <onboarding@resend.dev>',
       to,
-      subject: 'Reset Your Password — Crackncode Shop',
+      subject: 'Reset Your Password — CrackncodePremium',
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;">
           <h2 style="color:#111;margin-bottom:8px;">Reset Your Password</h2>

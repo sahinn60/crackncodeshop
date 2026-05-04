@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncode.shop';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.com';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -10,8 +10,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!res.ok) return { title: 'Product Not Found' };
     const product = await res.json();
 
-    const title = `${product.title} — CrackNcode`;
-    const description = product.description?.slice(0, 160) || 'Premium digital product from CrackNcode';
+    const title = `${product.title} — CrackncodePremium`;
+    const description = product.description?.slice(0, 160) || 'Premium digital product from CrackncodePremium';
     const url = `${SITE_URL}/products/${product.slug || id}`;
 
     return {
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         title,
         description,
         url,
-        siteName: 'CrackNcode',
+        siteName: 'CrackncodePremium',
         type: 'website',
         images: product.imageUrl ? [{ url: product.imageUrl, width: 800, height: 600, alt: product.title }] : [],
       },
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       },
     };
   } catch {
-    return { title: 'Product — CrackNcode' };
+    return { title: 'Product — CrackncodePremium' };
   }
 }
 

@@ -6,7 +6,7 @@ import { Mail, MapPin, Phone } from 'lucide-react';
 
 export function Footer() {
   const { settings } = useSettingsStore();
-  const name = settings?.siteName || 'Crackncode';
+  const name = settings?.siteName || 'CrackncodePremium';
   const footerLogo = settings?.footerLogoUrl || settings?.logoUrl;
 
   return (
@@ -101,7 +101,7 @@ export function Footer() {
               <ul className="space-y-3">
                 <li className="flex items-start gap-2.5">
                   <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <a href="mailto:support@crackncode.shop" className="text-sm text-slate-400 hover:text-white transition-colors">support@crackncode.shop</a>
+                  <a href="mailto:support@CrackncodePremiumpremium.com" className="text-sm text-slate-400 hover:text-white transition-colors">support@CrackncodePremiumpremium.com</a>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Phone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />

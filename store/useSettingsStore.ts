@@ -40,7 +40,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       const { data } = await apiClient.get('/settings');
       set({ settings: data, isLoading: false });
     } catch {
-      set({ settings: { siteName: 'Crackncode', logoUrl: '', faviconUrl: '', heroBannerUrl: '', bannerImages: [], socialLinks: {} }, isLoading: false });
+      set({ settings: { siteName: 'CrackncodePremium', logoUrl: '', faviconUrl: '', heroBannerUrl: '', bannerImages: [], socialLinks: {} }, isLoading: false });
     }
   },
 

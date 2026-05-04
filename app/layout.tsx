@@ -29,12 +29,12 @@ const hindSiliguri = Hind_Siliguri({
   preload: false,
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncode.shop';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.com';
 
 export const metadata: Metadata = {
   title: {
-    default: 'CrackNcode — Premium Digital Products & Solutions',
-    template: '%s | CrackNcode',
+    default: 'CrackncodePremium — Premium Digital Products & Solutions',
+    template: '%s | CrackncodePremium',
   },
   description: 'Premium digital products at your fingertips — templates, courses, tools, and more. Instant delivery, secure checkout, lifetime access.',
   metadataBase: new URL(SITE_URL),
@@ -42,16 +42,16 @@ export const metadata: Metadata = {
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: 'website',
-    siteName: 'CrackNcode',
-    title: 'CrackNcode — Premium Digital Products & Solutions',
+    siteName: 'CrackncodePremium',
+    title: 'CrackncodePremium — Premium Digital Products & Solutions',
     description: 'Premium digital products at your fingertips — templates, courses, tools, and more.',
     url: SITE_URL,
     locale: 'en_US',
-    images: [{ url: '/preview.png', width: 1200, height: 630, alt: 'CrackNcode' }],
+    images: [{ url: '/preview.png', width: 1200, height: 630, alt: 'CrackncodePremium' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CrackNcode — Premium Digital Products & Solutions',
+    title: 'CrackncodePremium — Premium Digital Products & Solutions',
     description: 'Premium digital products at your fingertips.',
     images: ['/preview.png'],
   },

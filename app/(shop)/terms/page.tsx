@@ -122,8 +122,8 @@ const sections = [
     id: 'contact',
     title: { en: '14. Contact Us', bn: '১৪. যোগাযোগ করুন' },
     content: {
-      en: '<p>For any questions:</p><p>📧 Email: <a href="mailto:support@crackncode.shop">support@crackncode.shop</a></p><p>🌐 Website: <a href="https://crackncode.shop">crackncode.shop</a></p>',
-      bn: '<p>কোনো প্রশ্নের জন্য:</p><p>📧 ইমেইল: <a href="mailto:support@crackncode.shop">support@crackncode.shop</a></p><p>🌐 ওয়েবসাইট: <a href="https://crackncode.shop">crackncode.shop</a></p>',
+      en: '<p>For any questions:</p><p>📧 Email: <a href="mailto:support@crackncodepremium.com">support@crackncodepremium.com</a></p><p>🌐 Website: <a href="https://crackncodepremium.com">crackncodepremium.com</a></p>',
+      bn: '<p>কোনো প্রশ্নের জন্য:</p><p>📧 ইমেইল: <a href="mailto:support@crackncodepremium.com">support@crackncodepremium.com</a></p><p>🌐 ওয়েবসাইট: <a href="https://crackncodepremium.com">crackncodepremium.com</a></p>',
     },
   },
 ];

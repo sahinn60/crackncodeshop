@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncode.shop';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.com';
 
 export default async function sitemap() {
   const [products, categories] = await Promise.all([

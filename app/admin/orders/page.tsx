@@ -154,7 +154,7 @@ export default function AdminOrdersPage() {
   };
 
   const openInvoice = useCallback((order: Order) => {
-    const html = generateInvoiceHTML(order, settings?.siteName || 'Crackncode', settings?.logoUrl || '');
+    const html = generateInvoiceHTML(order, settings?.siteName || 'CrackncodePremium', settings?.logoUrl || '');
     const win = window.open('', '_blank');
     if (win) { win.document.write(html); win.document.close(); }
   }, [settings]);

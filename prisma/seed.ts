@@ -9,15 +9,15 @@ async function main() {
 
   const adminPassword = await bcrypt.hash('Cr@ckNc0de#Adm1n$2026!', 12);
   await prisma.user.upsert({
-    where: { email: 'admin@crackncode.shop' },
+    where: { email: 'admin@CrackncodePremiumpremium.com' },
     update: { password: adminPassword },
-    create: { name: 'Admin', email: 'admin@crackncode.shop', password: adminPassword, role: 'ADMIN' },
+    create: { name: 'Admin', email: 'admin@CrackncodePremiumpremium.com', password: adminPassword, role: 'ADMIN' },
   });
 
   await prisma.settings.upsert({
     where: { id: 'singleton' },
     update: {},
-    create: { id: 'singleton', siteName: 'Crackncode' },
+    create: { id: 'singleton', siteName: 'CrackncodePremium' },
   });
 
   const products = [
@@ -41,7 +41,7 @@ async function main() {
   }
 
   console.log('✅ Database seeded successfully!');
-  console.log('👤 Admin: admin@crackncode.shop / Cr@ckNc0de#Adm1n$2026!');
+  console.log('👤 Admin: admin@CrackncodePremiumpremium.com / Cr@ckNc0de#Adm1n$2026!');
   console.log('🔑 JWT Secret updated in .env');
 
   await prisma.$disconnect();

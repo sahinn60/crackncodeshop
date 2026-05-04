@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Products — CrackNcode | Premium Digital Products',
+  title: 'Products — CrackncodePremium | Premium Digital Products',
   description: 'Browse our collection of premium digital products — templates, courses, tools, and more. Instant delivery, lifetime access.',
-  alternates: { canonical: 'https://crackncode.shop/products' },
+  alternates: { canonical: 'https://crackncodepremium.com/products' },
   openGraph: {
-    title: 'Products — CrackNcode',
+    title: 'Products — CrackncodePremium',
     description: 'Browse premium digital products with instant delivery.',
-    url: 'https://crackncode.shop/products',
+    url: 'https://crackncodepremium.com/products',
   },
 };
 
