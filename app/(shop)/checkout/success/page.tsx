@@ -38,27 +38,41 @@ function SuccessContent() {
       return;
     }
 
-    fetch('/api/eps/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ merchantTransactionId, epsTransactionId }),
-    })
-      .then(async (res) => {
-        const text = await res.text();
-        let data;
-        try { data = JSON.parse(text); } catch { throw new Error('Server returned invalid response'); }
-        if (!res.ok) throw new Error(data.error || `Verification failed (${res.status})`);
-        return data;
+    const verifyPayment = (retries = 3) => {
+      fetch('/api/eps/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantTransactionId, epsTransactionId }),
       })
-      .then((data) => {
-        clearCart();
-        router.replace(`/checkout/success/${data.orderId}`);
-      })
-      .catch((err) => {
-        console.error('[checkout/success] Verify error:', err);
-        setErrorMsg(err.message || 'Payment verification failed. Please contact support.');
-        setStatus('error');
-      });
+        .then(async (res) => {
+          const text = await res.text();
+          let data;
+          try { data = JSON.parse(text); } catch { throw new Error('Server returned invalid response'); }
+          if (!res.ok) {
+            // If rate limited or server error, retry after delay
+            if ((res.status === 500 || res.status === 429) && retries > 0) {
+              throw { retry: true, message: data.error };
+            }
+            throw new Error(data.error || `Verification failed (${res.status})`);
+          }
+          return data;
+        })
+        .then((data) => {
+          clearCart();
+          router.replace(`/checkout/success/${data.orderId}`);
+        })
+        .catch((err) => {
+          if (err?.retry && retries > 0) {
+            setTimeout(() => verifyPayment(retries - 1), 5000);
+            return;
+          }
+          console.error('[checkout/success] Verify error:', err);
+          setErrorMsg(err.message || 'Payment verification failed. Please contact support.');
+          setStatus('error');
+        });
+    };
+
+    verifyPayment();
   }, []);
 
   if (status === 'error') {

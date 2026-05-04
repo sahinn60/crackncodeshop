@@ -1,0 +1,4 @@
+:HL["/_next/static/chunks/0qftyv2uwelsy.css","style"]
+:HL["/_next/static/chunks/16lxja~n_5-gn.css","style"]
+:HL["/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"admin","param":null,"prefetchHints":0,"slots":{"children":{"name":"reviews","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"bQg7vD3Z3DPoGLSzC-KMa"}

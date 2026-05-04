@@ -1,0 +1,3 @@
+{
+  "/api/visitors/banned-ips/route": "app/api/visitors/banned-ips/route.js"
+}

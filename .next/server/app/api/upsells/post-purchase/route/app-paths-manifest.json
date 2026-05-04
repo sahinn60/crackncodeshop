@@ -1,0 +1,3 @@
+{
+  "/api/upsells/post-purchase/route": "app/api/upsells/post-purchase/route.js"
+}
