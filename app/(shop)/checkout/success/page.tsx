@@ -44,17 +44,19 @@ function SuccessContent() {
       body: JSON.stringify({ merchantTransactionId, epsTransactionId }),
     })
       .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Verification failed');
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { throw new Error('Server returned invalid response'); }
+        if (!res.ok) throw new Error(data.error || `Verification failed (${res.status})`);
         return data;
       })
       .then((data) => {
         clearCart();
-        // Redirect to clean URL with only the order ID
         router.replace(`/checkout/success/${data.orderId}`);
       })
       .catch((err) => {
-        setErrorMsg(err.message || 'Payment verification failed.');
+        console.error('[checkout/success] Verify error:', err);
+        setErrorMsg(err.message || 'Payment verification failed. Please contact support.');
         setStatus('error');
       });
   }, []);
@@ -62,14 +64,20 @@ function SuccessContent() {
   if (status === 'error') {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
-          <ShieldCheck className="h-10 w-10 text-red-500" />
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-100 mb-6">
+          <ShieldCheck className="h-10 w-10 text-amber-500" />
         </div>
-        <h2 className="text-2xl font-bold text-dark mb-2">Payment Failed</h2>
-        <p className="text-gray-500 mb-6 max-w-sm">{errorMsg}</p>
-        <Button className="bg-primary text-white" asChild>
-          <Link href="/checkout">Try Again</Link>
-        </Button>
+        <h2 className="text-2xl font-bold text-dark mb-2">Payment Processing</h2>
+        <p className="text-gray-500 mb-2 max-w-sm">{errorMsg}</p>
+        <p className="text-xs text-gray-400 mb-6 max-w-sm">If you were charged, your order will appear in your dashboard shortly. Please do not pay again.</p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button className="bg-primary text-white gap-2" asChild>
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/products">Continue Shopping</Link>
+          </Button>
+        </div>
       </div>
     );
   }

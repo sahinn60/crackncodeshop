@@ -9,7 +9,14 @@ export async function POST(req: NextRequest) {
   const { success: rlOk } = rateLimit(`eps-verify:${ip}`, 10, 60_000);
   if (!rlOk) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
-  const { merchantTransactionId, epsTransactionId } = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+
+  const { merchantTransactionId, epsTransactionId } = body;
 
   if (!merchantTransactionId && !epsTransactionId)
     return NextResponse.json({ error: 'Transaction ID required' }, { status: 400 });
@@ -139,6 +146,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, orderId: order.id, productIds });
   } catch (err: any) {
+    console.error('[eps/verify] Error:', err?.message, err?.stack);
     return NextResponse.json({ error: err.message || 'Verification failed' }, { status: 500 });
   }
 }
