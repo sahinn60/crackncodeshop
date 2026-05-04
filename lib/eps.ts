@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { prisma } from './prisma';
 
 const HASH_KEY = process.env.EPS_HASH_KEY!;
 const EPS_BASE = 'https://pgapi.eps.com.bd/v1';
@@ -9,12 +10,56 @@ export function generateHash(data: string): string {
   return hmac.digest('base64');
 }
 
-// Cache token in memory — reuse until 5 min before expiry
-let cachedToken: { token: string; expiresAt: number } | null = null;
+// In-memory fallback (works within same invocation)
+let memToken: { token: string; expiresAt: number } | null = null;
+
+async function getCachedToken(): Promise<string | null> {
+  // Check memory first
+  if (memToken && Date.now() < memToken.expiresAt) return memToken.token;
+
+  // Check database
+  try {
+    const settings = await prisma.settings.findUnique({
+      where: { id: 'singleton' },
+      select: { footerText: true }, // reuse footerText temporarily? No, use a dedicated approach
+    });
+    // Store token in a simple key-value approach using Settings model
+    // We'll use the ActivityLog model to store the token
+    const cached = await prisma.activityLog.findFirst({
+      where: { action: 'eps_token', createdAt: { gt: new Date(Date.now() - 55 * 60 * 1000) } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (cached) {
+      const data = JSON.parse(cached.metadata);
+      if (data.token && data.expiresAt > Date.now()) {
+        memToken = { token: data.token, expiresAt: data.expiresAt };
+        return data.token;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+async function saveTokenToCache(token: string, expiresAt: number) {
+  memToken = { token, expiresAt };
+  try {
+    // Clean old token entries
+    await prisma.activityLog.deleteMany({ where: { action: 'eps_token' } });
+    // Save new token
+    await prisma.activityLog.create({
+      data: {
+        userId: 'system',
+        action: 'eps_token',
+        metadata: JSON.stringify({ token, expiresAt }),
+      },
+    });
+  } catch {}
+}
 
 export async function getEpsToken(forceRefresh = false): Promise<string> {
-  if (!forceRefresh && cachedToken && Date.now() < cachedToken.expiresAt) {
-    return cachedToken.token;
+  if (!forceRefresh) {
+    const cached = await getCachedToken();
+    if (cached) return cached;
   }
 
   const username = process.env.EPS_USERNAME!;
@@ -27,18 +72,10 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
   });
 
   if (res.status === 429) {
-    // Rate limited — wait 2s and retry once
-    await new Promise(r => setTimeout(r, 2000));
-    const retry = await fetch(`${EPS_BASE}/Auth/GetToken`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-hash': xHash },
-      body: JSON.stringify({ userName: username, password: process.env.EPS_PASSWORD }),
-    });
-    if (!retry.ok) throw new Error(`EPS auth rate limited (429). Please try again.`);
-    const retryData = await retry.json();
-    if (!retryData.token) throw new Error(retryData.errorMessage || 'Failed to get EPS token');
-    cachedToken = { token: retryData.token, expiresAt: Date.now() + 55 * 60 * 1000 };
-    return retryData.token;
+    // Rate limited — check DB cache one more time (another invocation may have refreshed it)
+    const cached = await getCachedToken();
+    if (cached) return cached;
+    throw new Error('EPS authentication rate limited. Please try again in a few minutes.');
   }
 
   if (!res.ok) {
@@ -53,12 +90,14 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
     ? new Date(data.expireDate).getTime() - 5 * 60 * 1000
     : Date.now() + 55 * 60 * 1000;
 
-  cachedToken = { token: data.token, expiresAt };
+  await saveTokenToCache(data.token, expiresAt);
   return data.token;
 }
 
 export function clearTokenCache() {
-  cachedToken = null;
+  memToken = null;
+  // Also clear DB cache
+  prisma.activityLog.deleteMany({ where: { action: 'eps_token' } }).catch(() => {});
 }
 
 export { EPS_BASE };
