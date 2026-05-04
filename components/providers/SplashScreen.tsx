@@ -34,7 +34,7 @@ function SplashOverlay() {
             <img src={settings.logoUrl} alt={settings?.siteName || 'Loading'} className="h-12 sm:h-16 w-auto max-w-[200px] object-contain" />
           ) : (
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-dark">
-              {settings?.siteName || 'CrackncodePremium'}<span className="text-primary">.</span>
+              Crackncode <span className="text-primary" style={{ textShadow: '0 0 12px rgba(255,45,45,0.2)' }}>Premium</span>
             </h1>
           )}
         </div>
