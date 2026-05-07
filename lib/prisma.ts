@@ -6,10 +6,18 @@ declare global { var _prisma: PrismaClient | undefined }
 
 function createClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
+
   if (!connectionString) {
-    // During build time, return a proxy that won't crash
+    console.warn('[Prisma] DATABASE_URL not set - returning dummy client');
     return new Proxy({} as PrismaClient, {
-      get: () => () => Promise.resolve(null),
+      get: (_target, prop) => {
+        if (prop === '$connect' || prop === '$disconnect') return () => Promise.resolve();
+        // Return a chainable proxy for any model access
+        return new Proxy(() => Promise.resolve(null), {
+          get: () => () => Promise.resolve(null),
+          apply: () => Promise.resolve(null),
+        });
+      },
     });
   }
 
@@ -30,4 +38,9 @@ function createClient(): PrismaClient {
   return new PrismaClient({ adapter } as any);
 }
 
-export const prisma: PrismaClient = global._prisma ?? (global._prisma = createClient());
+// Don't cache during build - always create fresh at runtime
+const isBuilding = process.env.NEXT_PHASE === 'phase-production-build';
+
+export const prisma: PrismaClient = isBuilding
+  ? createClient()
+  : (global._prisma ?? (global._prisma = createClient()));
