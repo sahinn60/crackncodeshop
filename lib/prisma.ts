@@ -6,7 +6,10 @@ declare global { var _prisma: PrismaClient | undefined }
 
 function createClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('DATABASE_URL is not set');
+  if (!connectionString) {
+    // During build time, return a dummy client that won't connect
+    return new PrismaClient({ datasources: { db: { url: 'postgresql://dummy:dummy@localhost:5432/dummy' } } } as any);
+  }
 
   const pool = new Pool({
     connectionString,
