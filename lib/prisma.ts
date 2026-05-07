@@ -7,8 +7,10 @@ declare global { var _prisma: PrismaClient | undefined }
 function createClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    // During build time, return a dummy client that won't connect
-    return new PrismaClient({ datasources: { db: { url: 'postgresql://dummy:dummy@localhost:5432/dummy' } } } as any);
+    // During build time, return a proxy that won't crash
+    return new Proxy({} as PrismaClient, {
+      get: () => () => Promise.resolve(null),
+    });
   }
 
   const pool = new Pool({
