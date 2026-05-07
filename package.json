@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "echo 'Build skipped - pre-built locally'",
+    "build:local": "prisma generate && next build",
     "postinstall": "prisma generate || true",
     "start": "NODE_ENV=production node server.js",
     "start:passenger": "NODE_ENV=production node app.js",
