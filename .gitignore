@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -30,9 +28,6 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Webpack filesystem cache
-.cache/
-
 # env files
 .env
 .env.local
@@ -45,13 +40,17 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
-tsconfig.tsbuildinfo
 
+# prisma generated
 /lib/generated/prisma
+
+# logs
 dev.log
 app.log
+server.log
 
 # uploaded product files
 /uploads/*
 !/uploads/.gitkeep
+
+# cPanel files (kept in repo for cPanel deploy but ignored by Vercel)

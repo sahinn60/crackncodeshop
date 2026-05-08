@@ -1,18 +1,18 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
-declare global { var _prisma: PrismaClient | undefined }
+declare global {
+  var _prisma: PrismaClient | undefined;
+}
 
 function createClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL;
 
-  if (!connectionString) {
-    console.warn('[Prisma] DATABASE_URL not set - returning dummy client');
+  if (!url) {
+    console.warn('[Prisma] DATABASE_URL not set');
     return new Proxy({} as PrismaClient, {
-      get: (_target, prop) => {
+      get: (_t, prop) => {
         if (prop === '$connect' || prop === '$disconnect') return () => Promise.resolve();
-        // Return a chainable proxy for any model access
         return new Proxy(() => Promise.resolve(null), {
           get: () => () => Promise.resolve(null),
           apply: () => Promise.resolve(null),
@@ -21,16 +21,17 @@ function createClient(): PrismaClient {
     });
   }
 
+  // Use driver adapter for pg
+  const { PrismaPg } = require('@prisma/adapter-pg');
   const pool = new Pool({
-    connectionString,
-    max: 10,
+    connectionString: url,
+    max: 5,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
-    keepAlive: true,
     ssl: { rejectUnauthorized: false },
   });
 
-  pool.on('error', (err) => {
+  pool.on('error', (err: Error) => {
     console.error('[DB] Pool error:', err.message);
   });
 
@@ -38,9 +39,5 @@ function createClient(): PrismaClient {
   return new PrismaClient({ adapter } as any);
 }
 
-// Don't cache during build - always create fresh at runtime
-const isBuilding = process.env.NEXT_PHASE === 'phase-production-build';
-
-export const prisma: PrismaClient = isBuilding
-  ? createClient()
-  : (global._prisma ?? (global._prisma = createClient()));
+export const prisma: PrismaClient =
+  globalThis._prisma ?? (globalThis._prisma = createClient());
