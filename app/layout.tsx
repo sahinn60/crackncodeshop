@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Open_Sans, Hind_Siliguri } from "next/font/google";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SplashScreen } from "@/components/providers/SplashScreen";
@@ -97,6 +98,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <AuthProvider>
             <SplashScreen>
               {children}
+              <SpeedInsights />
             </SplashScreen>
           </AuthProvider>
         </SettingsProvider>
