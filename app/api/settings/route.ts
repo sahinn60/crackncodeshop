@@ -44,28 +44,31 @@ export async function PUT(req: NextRequest) {
 
   const body = await req.json();
   try {
+    const updateData: any = {};
+
+    // Only include fields that are explicitly provided (not undefined)
+    if (body.siteName !== undefined) updateData.siteName = body.siteName;
+    if (body.tagline !== undefined) updateData.tagline = body.tagline;
+    if (body.seoDescription !== undefined) updateData.seoDescription = body.seoDescription;
+    if (body.logoUrl !== undefined) updateData.logoUrl = body.logoUrl;
+    if (body.faviconUrl !== undefined) updateData.faviconUrl = body.faviconUrl;
+    if (body.heroBannerUrl !== undefined) updateData.heroBannerUrl = body.heroBannerUrl;
+    if (body.bannerImages !== undefined) updateData.bannerImages = JSON.stringify(body.bannerImages);
+    if (body.facebookPixelId !== undefined) updateData.facebookPixelId = body.facebookPixelId;
+    if (body.tiktokPixelId !== undefined) updateData.tiktokPixelId = body.tiktokPixelId;
+    if (body.tawktoScriptUrl !== undefined) updateData.tawktoScriptUrl = body.tawktoScriptUrl;
+    if (body.footerLogoUrl !== undefined) updateData.footerLogoUrl = body.footerLogoUrl;
+    if (body.footerDescription !== undefined) updateData.footerDescription = body.footerDescription;
+    if (body.socialLinks?.twitter !== undefined) updateData.socialTwitter = body.socialLinks.twitter;
+    if (body.socialLinks?.facebook !== undefined) updateData.socialFacebook = body.socialLinks.facebook;
+    if (body.socialLinks?.instagram !== undefined) updateData.socialInstagram = body.socialLinks.instagram;
+    if (body.whatsappNumber !== undefined) updateData.whatsappNumber = body.whatsappNumber;
+    if (body.youtubeChannel !== undefined) updateData.youtubeChannel = body.youtubeChannel;
+
     const updated = await prisma.settings.upsert({
       where: { id: 'singleton' },
-      update: {
-        siteName: body.siteName ?? undefined,
-        tagline: body.tagline ?? undefined,
-        seoDescription: body.seoDescription ?? undefined,
-        logoUrl: body.logoUrl ?? undefined,
-        faviconUrl: body.faviconUrl ?? undefined,
-        heroBannerUrl: body.heroBannerUrl ?? undefined,
-        bannerImages: body.bannerImages ? JSON.stringify(body.bannerImages) : undefined,
-        facebookPixelId: body.facebookPixelId ?? undefined,
-        tiktokPixelId: body.tiktokPixelId ?? undefined,
-        tawktoScriptUrl: body.tawktoScriptUrl ?? undefined,
-        footerLogoUrl: body.footerLogoUrl ?? undefined,
-        footerDescription: body.footerDescription ?? undefined,
-        socialTwitter: body.socialLinks?.twitter ?? undefined,
-        socialFacebook: body.socialLinks?.facebook ?? undefined,
-        socialInstagram: body.socialLinks?.instagram ?? undefined,
-        whatsappNumber: body.whatsappNumber ?? undefined,
-        youtubeChannel: body.youtubeChannel ?? undefined,
-      },
-      create: { id: 'singleton' },
+      update: updateData,
+      create: { id: 'singleton', ...updateData },
     });
 
     const data = formatSettings(updated);

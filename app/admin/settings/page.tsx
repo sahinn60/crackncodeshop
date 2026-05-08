@@ -82,6 +82,21 @@ export default function AdminSettingsPage() {
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">General Information</h3>
             <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
               {field('Site Name', 'siteName', formData.siteName)}
+              {field('Tagline', 'tagline', formData.tagline || '', 'Digital Solutions at Your Fingertips')}
+              <div className="sm:col-span-6">
+                <label className="block text-sm font-medium text-gray-700">SEO Description</label>
+                <div className="mt-1">
+                  <textarea
+                    name="seoDescription"
+                    value={formData.seoDescription || ''}
+                    onChange={e => setFormData(prev => ({ ...prev!, seoDescription: e.target.value }))}
+                    rows={2}
+                    placeholder="Custom SEO description (leave empty to use tagline)"
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Used in search results and social previews. Leave empty to auto-generate from tagline.</p>
+              </div>
               <div className="sm:col-span-6">
                 <ImageUpload
                   value={formData.logoUrl}
