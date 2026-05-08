@@ -8,6 +8,8 @@ let cache: { data: any; expiresAt: number } | null = null;
 function formatSettings(s: any) {
   return {
     siteName: s.siteName,
+    tagline: s.tagline || 'Digital Solutions at Your Fingertips',
+    seoDescription: s.seoDescription || '',
     logoUrl: s.logoUrl,
     faviconUrl: s.faviconUrl,
     heroBannerUrl: s.heroBannerUrl,
@@ -50,6 +52,8 @@ export async function PUT(req: NextRequest) {
       where: { id: 'singleton' },
       update: {
         siteName: body.siteName ?? undefined,
+        tagline: body.tagline ?? undefined,
+        seoDescription: body.seoDescription ?? undefined,
         logoUrl: body.logoUrl ?? undefined,
         faviconUrl: body.faviconUrl ?? undefined,
         heroBannerUrl: body.heroBannerUrl ?? undefined,

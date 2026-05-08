@@ -1,8 +1,19 @@
 import { ImageResponse } from 'next/og';
+import { prisma } from '@/lib/prisma';
 
-export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // Read settings from DB for dynamic branding
+  let siteName = 'CrackncodePremium';
+  let tagline = 'Digital Solutions at Your Fingertips';
+
+  try {
+    const settings = await prisma.settings.findUnique({ where: { id: 'singleton' } });
+    if (settings?.siteName) siteName = settings.siteName;
+    if (settings?.tagline) tagline = settings.tagline;
+  } catch {}
+
   return new ImageResponse(
     (
       <div
@@ -57,7 +68,7 @@ export async function GET() {
           }}
         />
 
-        {/* Subtle grid pattern overlay */}
+        {/* Grid overlay */}
         <div
           style={{
             position: 'absolute',
@@ -80,39 +91,14 @@ export async function GET() {
             position: 'relative',
           }}
         >
-          {/* Brand logo text */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0px',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '68px',
-                fontWeight: 800,
-                color: '#FFFFFF',
-                letterSpacing: '-0.04em',
-                lineHeight: 1,
-              }}
-            >
-              Crackncode
-            </span>
-            <span
-              style={{
-                fontSize: '68px',
-                fontWeight: 800,
-                color: '#FF2D2D',
-                letterSpacing: '-0.04em',
-                lineHeight: 1,
-              }}
-            >
-              Premium
+          {/* Brand name */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
+            <span style={{ fontSize: '64px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.04em', lineHeight: 1 }}>
+              {siteName}
             </span>
           </div>
 
-          {/* Divider line */}
+          {/* Divider */}
           <div
             style={{
               width: '80px',
@@ -123,51 +109,16 @@ export async function GET() {
             }}
           />
 
-          {/* Tagline */}
-          <div
-            style={{
-              fontSize: '30px',
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.85)',
-              letterSpacing: '-0.01em',
-              display: 'flex',
-            }}
-          >
-            Digital Solutions at Your Fingertips
+          {/* Dynamic tagline from admin settings */}
+          <div style={{ fontSize: '30px', fontWeight: 500, color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.01em', display: 'flex', textAlign: 'center', maxWidth: '900px', padding: '0 40px' }}>
+            {tagline}
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '36px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-          }}
-        >
-          {/* Domain pill */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 20px',
-              borderRadius: '999px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <div
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#22C55E',
-                display: 'flex',
-              }}
-            />
+        {/* Bottom domain pill */}
+        <div style={{ position: 'absolute', bottom: '36px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 20px', borderRadius: '999px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'flex' }} />
             <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.6)', fontWeight: 500, letterSpacing: '0.02em' }}>
               crackncodepremium.com
             </span>
@@ -175,9 +126,6 @@ export async function GET() {
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    { width: 1200, height: 630 }
   );
 }

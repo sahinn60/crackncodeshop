@@ -260,7 +260,9 @@ model CouponUsage {
 
 model Settings {
   id                String  @id @default("singleton")
-  siteName          String  @default("Crackncode")
+  siteName          String  @default("CrackncodePremium")
+  tagline           String  @default("Digital Solutions at Your Fingertips")
+  seoDescription    String  @default("")
   logoUrl           String  @default("")
   faviconUrl        String  @default("")
   heroBannerUrl     String  @default("")
