@@ -11,6 +11,7 @@ export default function AdminSettingsPage() {
   const [formData, setFormData] = useState<SiteSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => { fetchSettings(); }, [fetchSettings]);
   useEffect(() => { if (settings) setFormData(settings); }, [settings]);
@@ -29,10 +30,13 @@ export default function AdminSettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError('');
     try {
       await updateSettings(formData!);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      setSaveError(err?.response?.data?.error || err?.message || 'Failed to save. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -252,6 +256,7 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="bg-gray-50 px-4 py-3 flex items-center justify-end gap-4 sm:px-6">
+          {saveError && <span className="text-sm text-red-600 font-medium">{saveError}</span>}
           {saved && <span className="text-sm text-green-600 font-medium">✓ Settings saved!</span>}
           <Button onClick={handleSave} disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
             <Save className="h-4 w-4 mr-2" />

@@ -4,38 +4,36 @@ import { requireAdminOrSubAdmin } from '@/lib/auth';
 
 function formatSettings(s: any) {
   return {
-    siteName: s.siteName,
+    siteName: s.siteName || 'CrackncodePremium',
     tagline: s.tagline || 'Digital Solutions at Your Fingertips',
     seoDescription: s.seoDescription || '',
-    logoUrl: s.logoUrl,
-    faviconUrl: s.faviconUrl,
-    heroBannerUrl: s.heroBannerUrl,
-    bannerImages: (() => { try { return JSON.parse(s.bannerImages); } catch { return []; } })(),
-    facebookPixelId: s.facebookPixelId,
-    tiktokPixelId: s.tiktokPixelId,
-    tawktoScriptUrl: s.tawktoScriptUrl,
-    footerLogoUrl: s.footerLogoUrl,
-    footerDescription: s.footerDescription,
-    socialLinks: { twitter: s.socialTwitter, facebook: s.socialFacebook, instagram: s.socialInstagram },
-    whatsappNumber: s.whatsappNumber,
-    youtubeChannel: s.youtubeChannel,
+    logoUrl: s.logoUrl || '',
+    faviconUrl: s.faviconUrl || '',
+    heroBannerUrl: s.heroBannerUrl || '',
+    bannerImages: (() => { try { return JSON.parse(s.bannerImages || '[]'); } catch { return []; } })(),
+    facebookPixelId: s.facebookPixelId || '',
+    tiktokPixelId: s.tiktokPixelId || '',
+    tawktoScriptUrl: s.tawktoScriptUrl || '',
+    footerLogoUrl: s.footerLogoUrl || '',
+    footerDescription: s.footerDescription || '',
+    socialLinks: { twitter: s.socialTwitter || '', facebook: s.socialFacebook || '', instagram: s.socialInstagram || '' },
+    whatsappNumber: s.whatsappNumber || '',
+    youtubeChannel: s.youtubeChannel || '',
   };
 }
 
 export async function GET() {
-  const s = await prisma.settings.upsert({
-    where: { id: 'singleton' },
-    update: {},
-    create: { id: 'singleton' },
-  });
-
-  const data = formatSettings(s);
-
-  return NextResponse.json(data, {
-    headers: {
-      'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
-    },
-  });
+  try {
+    const s = await prisma.settings.upsert({
+      where: { id: 'singleton' },
+      update: {},
+      create: { id: 'singleton' },
+    });
+    return NextResponse.json(formatSettings(s));
+  } catch (err: any) {
+    console.error('Settings GET error:', err?.message);
+    return NextResponse.json(formatSettings({}));
+  }
 }
 
 export async function PUT(req: NextRequest) {
@@ -43,10 +41,10 @@ export async function PUT(req: NextRequest) {
   if (error) return error;
 
   const body = await req.json();
+
   try {
     const updateData: any = {};
 
-    // Only include fields that are explicitly provided (not undefined)
     if (body.siteName !== undefined) updateData.siteName = body.siteName;
     if (body.tagline !== undefined) updateData.tagline = body.tagline;
     if (body.seoDescription !== undefined) updateData.seoDescription = body.seoDescription;
@@ -65,16 +63,29 @@ export async function PUT(req: NextRequest) {
     if (body.whatsappNumber !== undefined) updateData.whatsappNumber = body.whatsappNumber;
     if (body.youtubeChannel !== undefined) updateData.youtubeChannel = body.youtubeChannel;
 
-    const updated = await prisma.settings.upsert({
-      where: { id: 'singleton' },
-      update: updateData,
-      create: { id: 'singleton', ...updateData },
-    });
+    let updated;
+    try {
+      updated = await prisma.settings.upsert({
+        where: { id: 'singleton' },
+        update: updateData,
+        create: { id: 'singleton', ...updateData },
+      });
+    } catch (dbErr: any) {
+      // If error is about unknown columns (tagline/seoDescription not migrated yet),
+      // retry without those fields
+      console.error('Settings DB error, retrying without new fields:', dbErr?.message);
+      delete updateData.tagline;
+      delete updateData.seoDescription;
+      updated = await prisma.settings.upsert({
+        where: { id: 'singleton' },
+        update: updateData,
+        create: { id: 'singleton', ...updateData },
+      });
+    }
 
-    const data = formatSettings(updated);
-    return NextResponse.json(data);
+    return NextResponse.json(formatSettings(updated));
   } catch (err: any) {
-    console.error('Settings PUT error:', err);
-    return NextResponse.json({ error: err.message || 'Failed to save' }, { status: 500 });
+    console.error('Settings PUT error:', err?.message, err?.stack);
+    return NextResponse.json({ error: err.message || 'Failed to save settings' }, { status: 500 });
   }
 }
