@@ -15,45 +15,72 @@ function log(msg) {
 // MIME types for static files
 const MIME = {
   '.js': 'application/javascript',
+  '.mjs': 'application/javascript',
   '.css': 'text/css',
   '.json': 'application/json',
+  '.html': 'text/html',
+  '.htm': 'text/html',
+  '.xml': 'application/xml',
+  '.txt': 'text/plain',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
+  '.eot': 'application/vnd.ms-fontobject',
+  '.otf': 'font/otf',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.pdf': 'application/pdf',
   '.map': 'application/json',
 };
 
 function serveStatic(req, res) {
-  // Map /_next/static/* to .next/static/*
-  if (req.url.startsWith('/_next/static/')) {
-    const filePath = path.join(__dirname, '.next', 'static', req.url.slice(14).split('?')[0]);
-    return sendFile(filePath, res);
+  const urlPath = decodeURIComponent(req.url.split('?')[0]);
+
+  // Block directory traversal
+  if (urlPath.includes('..')) return false;
+
+  // Map /_next/static/* to .next/static/* (immutable cache)
+  if (urlPath.startsWith('/_next/static/')) {
+    const filePath = path.join(__dirname, '.next', 'static', urlPath.slice(14));
+    return sendFile(filePath, res, true);
   }
-  // Map /_next/* to .next/*
-  if (req.url.startsWith('/_next/')) {
-    const filePath = path.join(__dirname, '.next', req.url.slice(6).split('?')[0]);
-    return sendFile(filePath, res);
+
+  // Map /_next/image, /_next/data etc. to .next/*
+  if (urlPath.startsWith('/_next/')) {
+    const filePath = path.join(__dirname, '.next', urlPath.slice(6));
+    return sendFile(filePath, res, true);
   }
+
+  // Serve public folder files (favicon.ico, images, robots.txt, etc.)
+  const publicPath = path.join(__dirname, 'public', urlPath);
+  if (fs.existsSync(publicPath) && fs.statSync(publicPath).isFile()) {
+    return sendFile(publicPath, res, false);
+  }
+
   return false;
 }
 
-function sendFile(filePath, res) {
+function sendFile(filePath, res, immutable) {
   try {
-    if (!fs.existsSync(filePath)) return false;
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return false;
     const ext = path.extname(filePath).toLowerCase();
     const mime = MIME[ext] || 'application/octet-stream';
     const content = fs.readFileSync(filePath);
+    const cacheHeader = immutable
+      ? 'public, max-age=31536000, immutable'
+      : 'public, max-age=3600';
     res.writeHead(200, {
       'Content-Type': mime,
-      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Content-Length': content.length,
+      'Cache-Control': cacheHeader,
     });
     res.end(content);
     return true;
