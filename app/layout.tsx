@@ -17,25 +17,25 @@ const inter = Inter({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.com';
 
-export async function generateMetadata(): Promise<Metadata> {
-  let siteName = 'CrackncodePremium';
-  let tagline = 'Digital Solutions at Your Fingertips';
-  let seoDescription = '';
-
+async function getSettings() {
   try {
     const settings = await prisma.settings.findUnique({ where: { id: 'singleton' } });
-    if (settings?.siteName) siteName = settings.siteName;
-    if (settings?.tagline) tagline = settings.tagline;
-    if (settings?.seoDescription) seoDescription = settings.seoDescription;
-  } catch {}
+    return {
+      siteName: settings?.siteName || 'CrackncodePremium',
+      tagline: settings?.tagline || 'Digital Solutions at Your Fingertips',
+      seoDescription: settings?.seoDescription || '',
+    };
+  } catch {
+    return { siteName: 'CrackncodePremium', tagline: 'Digital Solutions at Your Fingertips', seoDescription: '' };
+  }
+}
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { siteName, tagline, seoDescription } = await getSettings();
   const description = seoDescription || `${tagline} — Premium tools, templates, and growth systems for modern businesses.`;
 
   return {
-    title: {
-      default: `${siteName} — ${tagline}`,
-      template: `%s | ${siteName}`,
-    },
+    title: { default: `${siteName} — ${tagline}`, template: `%s | ${siteName}` },
     description,
     metadataBase: new URL(SITE_URL),
     icons: { icon: '/favicon.ico' },
@@ -63,18 +63,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { siteName, tagline } = await getSettings();
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'Organization',
         '@id': `${SITE_URL}/#organization`,
-        name: 'CrackncodePremium',
+        name: siteName,
         url: SITE_URL,
         logo: { '@type': 'ImageObject', url: `${SITE_URL}/api/og` },
         sameAs: [],
@@ -83,8 +85,8 @@ export default function RootLayout({
         '@type': 'WebSite',
         '@id': `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: 'CrackncodePremium',
-        description: 'Digital Solutions at Your Fingertips',
+        name: siteName,
+        description: tagline,
         publisher: { '@id': `${SITE_URL}/#organization` },
         potentialAction: {
           '@type': 'SearchAction',
