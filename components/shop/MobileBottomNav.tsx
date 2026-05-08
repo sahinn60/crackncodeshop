@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Home, ShoppingCart, User, Grid3X3, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { useCartStore } from '@/store/useCartStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { AnimatePresence, motion } from 'framer-motion';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -39,28 +38,24 @@ export function MobileBottomNav() {
     { icon: ShoppingCart, label: 'Cart', action: () => { setAccountOpen(false); openCart(); }, badge: cartCount },
     ...(isAuthenticated
       ? [{ icon: User, label: 'Account', action: () => setAccountOpen(o => !o) }]
-      : [
-          { icon: User, label: 'Login', href: '/login', active: isActive('/login') },
-        ]
+      : [{ icon: User, label: 'Login', href: '/login', active: isActive('/login') }]
     ),
   ];
 
   return (
     <>
-      {/* Account overlay (authenticated only) */}
-      <AnimatePresence>
-        {accountOpen && isAuthenticated && (
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-[60px] z-[90] bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl md:hidden"
-          >
+      {/* Account overlay */}
+      {isAuthenticated && (
+        <>
+          <div
+            className={`fixed inset-0 z-[85] bg-black/30 md:hidden transition-opacity duration-200 ${accountOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            onClick={() => setAccountOpen(false)}
+          />
+          <div className={`fixed inset-x-0 bottom-[60px] z-[90] bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl md:hidden transition-transform duration-300 ${accountOpen ? 'translate-y-0' : 'translate-y-full'}`}>
             <div className="p-4 space-y-1">
               <div className="flex items-center gap-3 px-3 py-3 mb-2">
                 {user?.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="h-10 w-10 rounded-full object-cover border-2 border-gray-200" />
+                  <img src={user.avatarUrl} alt={user.name} width={40} height={40} className="h-10 w-10 rounded-full object-cover border-2 border-gray-200" />
                 ) : (
                   <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-red-400 flex items-center justify-center text-white text-sm font-bold">
                     {initials}
@@ -80,22 +75,9 @@ export function MobileBottomNav() {
                 </Link>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Backdrop */}
-      <AnimatePresence>
-        {accountOpen && isAuthenticated && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setAccountOpen(false)}
-            className="fixed inset-0 z-[85] bg-black/30 md:hidden"
-          />
-        )}
-      </AnimatePresence>
+          </div>
+        </>
+      )}
 
       {/* Bottom Nav Bar */}
       <nav className="fixed bottom-0 inset-x-0 z-[95] md:hidden bg-white border-t border-gray-200" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
@@ -122,28 +104,24 @@ export function MobileBottomNav() {
 
             if (item.action) {
               return (
-                <button key={item.label} onClick={item.action} className="flex-1 flex items-center justify-center py-1 active:scale-95 transition-transform">
+                <button key={item.label} onClick={item.action} className="flex-1 flex items-center justify-center py-1">
                   {content}
                 </button>
               );
             }
 
             return (
-              <Link key={item.label} href={item.href!} className="flex-1 flex items-center justify-center py-1 active:scale-95 transition-transform">
+              <Link key={item.label} href={item.href!} className="flex-1 flex items-center justify-center py-1">
                 {content}
               </Link>
             );
           })}
 
-          {/* Round red logout button — only when logged in */}
           {isAuthenticated && (
-            <button
-              onClick={handleLogout}
-              className="flex-1 flex items-center justify-center py-1 active:scale-95 transition-transform"
-            >
+            <button onClick={handleLogout} className="flex-1 flex items-center justify-center py-1">
               <div className="flex flex-col items-center gap-0.5">
-                <div className="h-8 w-8 rounded-full bg-red-50 flex items-center justify-center hover:bg-primary hover:text-white transition-colors group">
-                  <LogOut className="h-4 w-4 text-primary group-hover:text-white transition-colors" />
+                <div className="h-8 w-8 rounded-full bg-red-50 flex items-center justify-center">
+                  <LogOut className="h-4 w-4 text-primary" />
                 </div>
                 <span className="text-[10px] font-medium text-primary">Logout</span>
               </div>

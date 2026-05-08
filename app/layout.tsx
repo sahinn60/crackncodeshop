@@ -18,27 +18,37 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.
 
 export const metadata: Metadata = {
   title: {
-    default: 'CrackncodePremium — Premium Digital Products & Solutions',
-    template: '%s | CrackncodePremium',
+    default: 'Crackncode — We Build Digital Growth Systems',
+    template: '%s | Crackncode',
   },
-  description: 'Premium digital products at your fingertips — templates, courses, tools, and more. Instant delivery, secure checkout, lifetime access.',
+  description: 'Web • Marketing • Growth — Premium digital products, tools, and solutions for modern businesses. Instant delivery, lifetime access.',
   metadataBase: new URL(SITE_URL),
-  icons: { icon: [] },
+  icons: {
+    icon: '/favicon.ico',
+  },
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: 'website',
-    siteName: 'CrackncodePremium',
-    title: 'CrackncodePremium — Premium Digital Products & Solutions',
-    description: 'Premium digital products at your fingertips — templates, courses, tools, and more.',
+    siteName: 'Crackncode',
+    title: 'Crackncode — We Build Digital Growth Systems',
+    description: 'Web • Marketing • Growth — Premium digital products, tools, and solutions for modern businesses.',
     url: SITE_URL,
     locale: 'en_US',
-    images: [{ url: '/preview.png', width: 1200, height: 630, alt: 'CrackncodePremium' }],
+    images: [
+      {
+        url: '/api/og',
+        width: 1200,
+        height: 630,
+        alt: 'Crackncode — We Build Digital Growth Systems',
+        type: 'image/png',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CrackncodePremium — Premium Digital Products & Solutions',
-    description: 'Premium digital products at your fingertips.',
-    images: ['/preview.png'],
+    title: 'Crackncode — We Build Digital Growth Systems',
+    description: 'Web • Marketing • Growth — Premium digital products, tools, and solutions for modern businesses.',
+    images: ['/api/og'],
   },
   robots: {
     index: true,
@@ -52,8 +62,44 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${SITE_URL}/#organization`,
+        name: 'Crackncode',
+        url: SITE_URL,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${SITE_URL}/api/og`,
+        },
+        sameAs: [],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${SITE_URL}/#website`,
+        url: SITE_URL,
+        name: 'Crackncode',
+        description: 'We Build Digital Growth Systems — Web, Marketing & Growth solutions.',
+        publisher: { '@id': `${SITE_URL}/#organization` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/products?search={search_term_string}` },
+          'query-input': 'required name=search_term_string',
+        },
+      },
+    ],
+  };
+
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans tracking-tight bg-light text-dark">
         <SettingsProvider>
           <AuthProvider>
