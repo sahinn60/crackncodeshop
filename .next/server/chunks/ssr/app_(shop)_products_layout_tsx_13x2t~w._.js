@@ -1,3 +1,0 @@
-module.exports=[1668,a=>{"use strict";a.s(["default",0,function({children:a}){return a},"metadata",0,{title:"Products — CrackncodePremium | Premium Digital Products",description:"Browse our collection of premium digital products — templates, courses, tools, and more. Instant delivery, lifetime access.",alternates:{canonical:"https://crackncodepremium.com/products"},openGraph:{title:"Products — CrackncodePremium",description:"Browse premium digital products with instant delivery.",url:"https://crackncodepremium.com/products"}}])},11076,a=>{a.n(a.i(1668))}];
-
-//# sourceMappingURL=app_%28shop%29_products_layout_tsx_13x2t~w._.js.map

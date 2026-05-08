@@ -1,3 +1,0 @@
-{
-  "/(shop)/checkout/success/[orderId]/page": "app/(shop)/checkout/success/[orderId]/page.js"
-}
