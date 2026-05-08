@@ -46,6 +46,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tsconfig.tsbuildinfo
 
 /lib/generated/prisma
 dev.log

@@ -5,32 +5,13 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@prisma/client', 'bcryptjs', 'jsonwebtoken', 'pg'],
 
-  // Allow large file uploads (100MB)
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
     },
   },
 
-  // Silence Turbopack warning
-  turbopack: {},
-
-  // Reduce memory usage for production builds
   productionBrowserSourceMaps: false,
-
-  webpack(config, { dev, isServer }) {
-    config.cache = {
-      type: 'filesystem',
-      allowCollectingMemory: false,
-    };
-    config.parallelism = 1;
-
-    if (!dev) {
-      config.devtool = false;
-    }
-
-    return config;
-  },
 
   async headers() {
     return [
