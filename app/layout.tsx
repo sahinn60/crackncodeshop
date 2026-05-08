@@ -18,10 +18,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.
 
 export const metadata: Metadata = {
   title: {
-    default: 'Crackncode — We Build Digital Growth Systems',
-    template: '%s | Crackncode',
+    default: 'CrackncodePremium — Digital Solutions at Your Fingertips',
+    template: '%s | CrackncodePremium',
   },
-  description: 'Web • Marketing • Growth — Premium digital products, tools, and solutions for modern businesses. Instant delivery, lifetime access.',
+  description: 'Digital Solutions at Your Fingertips — Premium tools, templates, and growth systems for modern businesses. Instant delivery, lifetime access.',
   metadataBase: new URL(SITE_URL),
   icons: {
     icon: '/favicon.ico',
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   alternates: { canonical: SITE_URL },
   openGraph: {
     type: 'website',
-    siteName: 'Crackncode',
-    title: 'Crackncode — We Build Digital Growth Systems',
-    description: 'Web • Marketing • Growth — Premium digital products, tools, and solutions for modern businesses.',
+    siteName: 'CrackncodePremium',
+    title: 'CrackncodePremium',
+    description: 'Digital Solutions at Your Fingertips',
     url: SITE_URL,
     locale: 'en_US',
     images: [
@@ -39,15 +39,15 @@ export const metadata: Metadata = {
         url: '/api/og',
         width: 1200,
         height: 630,
-        alt: 'Crackncode — We Build Digital Growth Systems',
+        alt: 'CrackncodePremium — Digital Solutions at Your Fingertips',
         type: 'image/png',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Crackncode — We Build Digital Growth Systems',
-    description: 'Web • Marketing • Growth — Premium digital products, tools, and solutions for modern businesses.',
+    title: 'CrackncodePremium',
+    description: 'Digital Solutions at Your Fingertips',
     images: ['/api/og'],
   },
   robots: {
@@ -68,7 +68,7 @@ export default function RootLayout({
       {
         '@type': 'Organization',
         '@id': `${SITE_URL}/#organization`,
-        name: 'Crackncode',
+        name: 'CrackncodePremium',
         url: SITE_URL,
         logo: {
           '@type': 'ImageObject',
@@ -80,8 +80,8 @@ export default function RootLayout({
         '@type': 'WebSite',
         '@id': `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: 'Crackncode',
-        description: 'We Build Digital Growth Systems — Web, Marketing & Growth solutions.',
+        name: 'CrackncodePremium',
+        description: 'Digital Solutions at Your Fingertips',
         publisher: { '@id': `${SITE_URL}/#organization` },
         potentialAction: {
           '@type': 'SearchAction',
