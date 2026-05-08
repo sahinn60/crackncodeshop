@@ -9,6 +9,8 @@ export interface BannerImage {
 
 export interface SiteSettings {
   siteName: string;
+  tagline?: string;
+  seoDescription?: string;
   logoUrl: string;
   faviconUrl: string;
   heroBannerUrl: string;
@@ -27,7 +29,7 @@ interface SettingsState {
   settings: SiteSettings | null;
   isLoading: boolean;
   fetchSettings: () => Promise<void>;
-  updateSettings: (newSettings: Partial<SiteSettings>) => Promise<void>;
+  updateSettings: (newSettings: Partial<SiteSettings>) => Promise<any>;
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
@@ -46,9 +48,8 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
   updateSettings: async (newSettings) => {
     const { data } = await apiClient.put('/settings', newSettings);
-    set((state) => ({
-      settings: state.settings ? { ...state.settings, ...newSettings } : null,
-    }));
+    // Use the server response directly — this is the source of truth
+    set({ settings: data });
     return data;
   },
 }));

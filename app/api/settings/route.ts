@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdminOrSubAdmin } from '@/lib/auth';
 
-// In-memory cache — settings rarely change
-let cache: { data: any; expiresAt: number } | null = null;
-
 function formatSettings(s: any) {
   return {
     siteName: s.siteName,
@@ -26,10 +23,6 @@ function formatSettings(s: any) {
 }
 
 export async function GET() {
-  if (cache && Date.now() < cache.expiresAt) {
-    return NextResponse.json(cache.data);
-  }
-
   const s = await prisma.settings.upsert({
     where: { id: 'singleton' },
     update: {},
@@ -37,9 +30,12 @@ export async function GET() {
   });
 
   const data = formatSettings(s);
-  cache = { data, expiresAt: Date.now() + 60_000 };
 
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+    },
+  });
 }
 
 export async function PUT(req: NextRequest) {
@@ -72,10 +68,7 @@ export async function PUT(req: NextRequest) {
       create: { id: 'singleton' },
     });
 
-  // Invalidate cache
-  const data = formatSettings(updated);
-  cache = { data, expiresAt: Date.now() + 60_000 };
-
+    const data = formatSettings(updated);
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('Settings PUT error:', err);
