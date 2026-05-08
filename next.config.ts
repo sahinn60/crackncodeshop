@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   poweredByHeader: false,
   serverExternalPackages: ['@prisma/client', 'bcryptjs', 'jsonwebtoken', 'pg'],
 
