@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (products.length === 0)
     return NextResponse.json({ error: 'No valid products found' }, { status: 404 });
 
-  // Check active flash sales and apply discounts server-side
+  // Calculate flash sale prices
   const now = new Date();
   const activeSales = await prisma.flashSale.findMany({
     where: { isActive: true },
@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
 
   // Apply coupon discount
   if (couponCode) {
-    const now = new Date();
     const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.trim().toUpperCase() } });
     if (coupon && coupon.isActive && coupon.startDate <= now && (!coupon.endDate || coupon.endDate >= now)) {
       const disc = coupon.discount.trim();
@@ -59,15 +58,8 @@ export async function POST(req: NextRequest) {
         if (!isNaN(flat)) discountAmount = flat;
       }
       total = Math.max(0, total - Math.min(discountAmount, total));
-    }
-  }
-  const merchantTransactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
-  const customerOrderId = `ORD${Date.now()}`;
 
-  // Record coupon usage before payment (prevents reuse during payment flow)
-  if (couponCode) {
-    const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.trim().toUpperCase() } });
-    if (coupon) {
+      // Record coupon usage
       await prisma.couponUsage.upsert({
         where: { couponId_userId: { couponId: coupon.id, userId: user!.id } },
         create: { couponId: coupon.id, userId: user!.id },
@@ -76,8 +68,26 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Use the request origin so EPS redirects back to the correct domain
-  // (works for both localhost and production)
+  const merchantTransactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+  // ✅ CREATE PENDING ORDER BEFORE PAYMENT
+  // This ensures we NEVER lose a successful payment
+  const order = await prisma.order.create({
+    data: {
+      userId: user!.id,
+      total: Math.round(total),
+      status: 'PENDING',
+      epsMerchantTxId: merchantTransactionId,
+      epsTransactionId: '',
+      items: {
+        create: products.map(p => ({
+          productId: p.id,
+          price: flashPriceMap.get(p.id) ?? p.price,
+        })),
+      },
+    },
+  });
+
   const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/[^/]*$/, '') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   try {
@@ -87,15 +97,15 @@ export async function POST(req: NextRequest) {
     const body = {
       merchantId: process.env.EPS_MERCHANT_ID,
       storeId: process.env.EPS_STORE_ID,
-      CustomerOrderId: customerOrderId,
+      CustomerOrderId: order.id,
       merchantTransactionId,
       transactionTypeId: 1,
       financialEntityId: 0,
       transitionStatusId: 0,
       totalAmount: Math.round(total),
       successUrl: `${origin}/checkout/success?merchantTransactionId=${merchantTransactionId}`,
-      failUrl: `${origin}/checkout/fail`,
-      cancelUrl: `${origin}/checkout/fail`,
+      failUrl: `${origin}/checkout/fail?orderId=${order.id}`,
+      cancelUrl: `${origin}/checkout/fail?orderId=${order.id}`,
       customerName,
       customerEmail,
       customerAddress: 'N/A',
@@ -120,6 +130,8 @@ export async function POST(req: NextRequest) {
       })),
     };
 
+    let epsData: any;
+
     const epsRes = await fetch(`${EPS_BASE}/EPSEngine/InitializeEPS`, {
       method: 'POST',
       headers: {
@@ -130,7 +142,6 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    // If unauthorized, clear cached token and retry once with a fresh token
     if (epsRes.status === 401) {
       clearTokenCache();
       const freshToken = await getEpsToken(true);
@@ -143,19 +154,33 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify(body),
       });
-      const retryData = await retryRes.json();
-      if (!retryData.RedirectURL)
-        return NextResponse.json({ error: retryData.ErrorMessage || 'EPS initialization failed' }, { status: 502 });
-      return NextResponse.json({ redirectUrl: retryData.RedirectURL, transactionId: retryData.TransactionId });
+      epsData = await retryRes.json();
+    } else {
+      epsData = await epsRes.json();
     }
 
-    const epsData = await epsRes.json();
-
-    if (!epsData.RedirectURL)
+    if (!epsData.RedirectURL) {
+      // Mark order as CANCELLED if EPS fails to initialize
+      await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
       return NextResponse.json({ error: epsData.ErrorMessage || 'EPS initialization failed' }, { status: 502 });
+    }
 
-    return NextResponse.json({ redirectUrl: epsData.RedirectURL, transactionId: epsData.TransactionId });
+    // Store EPS transaction ID on the order
+    if (epsData.TransactionId) {
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { epsTransactionId: String(epsData.TransactionId) },
+      });
+    }
+
+    return NextResponse.json({
+      redirectUrl: epsData.RedirectURL,
+      transactionId: epsData.TransactionId,
+      orderId: order.id,
+    });
   } catch (err: any) {
+    // Mark order as CANCELLED on error
+    await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } }).catch(() => {});
     return NextResponse.json({ error: err.message || 'Payment initiation failed' }, { status: 500 });
   }
 }
