@@ -20,56 +20,65 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Auto-refresh on 401
+// Auto-refresh on 401 — with safe concurrency handling
 let isRefreshing = false;
-let queue: ((token: string) => void)[] = [];
+let refreshPromise: Promise<string> | null = null;
+
+function doRefresh(): Promise<string> {
+  const refreshToken = localStorage.getItem('refresh-token');
+  if (!refreshToken) return Promise.reject(new Error('No refresh token'));
+
+  return axios.post(`${baseURL}/auth/refresh`, { refreshToken })
+    .then(({ data }) => {
+      localStorage.setItem('auth-token', data.accessToken);
+      if (data.refreshToken) localStorage.setItem('refresh-token', data.refreshToken);
+
+      // Update cookie for middleware
+      const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `auth-token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict${secure}`;
+
+      // Sync Zustand store
+      if (data.user && onTokenRefreshed) {
+        onTokenRefreshed(data.user, data.accessToken, data.refreshToken);
+      }
+
+      return data.accessToken;
+    });
+}
 
 apiClient.interceptors.response.use(
   res => res,
   async err => {
     const original = err.config;
     const isAuthRoute = original.url?.includes('/auth/');
-    if (err.response?.status !== 401 || original._retry || isAuthRoute) return Promise.reject(err);
 
-    if (isRefreshing) {
-      return new Promise(resolve => {
-        queue.push((token: string) => {
-          original.headers.Authorization = `Bearer ${token}`;
-          resolve(apiClient(original));
-        });
-      });
+    // Only handle 401, skip auth routes, skip already retried
+    if (err.response?.status !== 401 || original._retry || isAuthRoute) {
+      return Promise.reject(err);
     }
 
     original._retry = true;
-    isRefreshing = true;
 
     try {
-      const refreshToken = localStorage.getItem('refresh-token');
-      if (!refreshToken) throw new Error('No refresh token');
-
-      const { data } = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
-      localStorage.setItem('auth-token', data.accessToken);
-      if (data.refreshToken) localStorage.setItem('refresh-token', data.refreshToken);
-      document.cookie = `auth-token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
-
-      // Sync Zustand store with fresh user data from refresh
-      if (data.user && onTokenRefreshed) {
-        onTokenRefreshed(data.user, data.accessToken, data.refreshToken);
+      // Single refresh for all concurrent 401s
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = doRefresh().finally(() => {
+          isRefreshing = false;
+          refreshPromise = null;
+        });
       }
 
-      queue.forEach(cb => cb(data.accessToken));
-      queue = [];
-
-      original.headers.Authorization = `Bearer ${data.accessToken}`;
+      const newToken = await refreshPromise!;
+      original.headers.Authorization = `Bearer ${newToken}`;
       return apiClient(original);
     } catch {
+      // Don't force redirect — let the component handle auth state
+      // Only clear tokens silently
       localStorage.removeItem('auth-token');
       localStorage.removeItem('refresh-token');
       document.cookie = 'auth-token=; path=/; max-age=0';
-      if (typeof window !== 'undefined') window.location.href = '/login';
       return Promise.reject(err);
-    } finally {
-      isRefreshing = false;
     }
   }
 );
