@@ -11,10 +11,14 @@ export function Footer() {
 
   return (
     <footer className="text-slate-300 bg-slate-900">
-      {/* Footer banner image */}
+      {/* Footer banner image - with explicit aspect ratio to prevent CLS */}
       <div className="w-full">
-        <img src="/Footer-Desktop-Dark-Version.png" alt="Partners" className="hidden md:block w-full h-auto object-contain" />
-        <img src="/Footer-Mobile-Dark-Version.png" alt="Partners" className="block md:hidden w-full h-auto object-contain" />
+        <div className="hidden md:block w-full aspect-[1920/200] bg-slate-900">
+          <img src="/Footer-Desktop-Dark-Version.png" alt="Partners" loading="lazy" decoding="async" className="w-full h-full object-contain" />
+        </div>
+        <div className="block md:hidden w-full aspect-[750/200] bg-slate-900">
+          <img src="/Footer-Mobile-Dark-Version.png" alt="Partners" loading="lazy" decoding="async" className="w-full h-full object-contain" />
+        </div>
       </div>
 
       {/* Content */}
@@ -24,11 +28,15 @@ export function Footer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
             {/* Brand */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <Link href="/" className="inline-block mb-0.5 transition-transform duration-200 hover:scale-105">
+              <Link href="/" className="inline-block mb-0.5">
                 {footerLogo ? (
                   <img
                     src={footerLogo}
                     alt={name}
+                    width={280}
+                    height={84}
+                    loading="lazy"
+                    decoding="async"
                     className="h-[128px] sm:h-[168px] w-auto max-w-[560px] object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.15)]"
                   />
                 ) : (
@@ -38,9 +46,7 @@ export function Footer() {
                 )}
               </Link>
               {settings?.footerDescription && (
-                <p
-                  className="text-[13.5px] sm:text-[15.5px] font-semibold text-slate-300 leading-snug mt-0 max-w-[420px] footer-desc-glow"
-                >
+                <p className="text-[13.5px] sm:text-[15.5px] font-semibold text-slate-300 leading-snug mt-0 max-w-[420px] footer-desc-glow">
                   {settings.footerDescription}
                 </p>
               )}
@@ -81,7 +87,6 @@ export function Footer() {
                 <li><Link href="/" className="text-sm text-slate-400 hover:text-white transition-colors">Home</Link></li>
                 <li><Link href="/products" className="text-sm text-slate-400 hover:text-white transition-colors">Products</Link></li>
                 <li><Link href="/about" className="text-sm text-slate-400 hover:text-white transition-colors">About Us</Link></li>
-
               </ul>
             </div>
 
@@ -101,7 +106,7 @@ export function Footer() {
               <ul className="space-y-3">
                 <li className="flex items-start gap-2.5">
                   <Mail className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <a href="mailto:support@CrackncodePremiumpremium.com" className="text-sm text-slate-400 hover:text-white transition-colors">support@CrackncodePremiumpremium.com</a>
+                  <a href="mailto:support@crackncodepremium.com" className="text-sm text-slate-400 hover:text-white transition-colors">support@crackncodepremium.com</a>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Phone className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -115,7 +120,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Divider + Bottom bar */}
+          {/* Bottom bar */}
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-500">
               &copy; {new Date().getFullYear()} {name}. All rights reserved.
