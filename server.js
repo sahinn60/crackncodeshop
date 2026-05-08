@@ -12,6 +12,56 @@ function log(msg) {
   try { fs.appendFileSync(path.join(__dirname, 'app.log'), line + '\n'); } catch {}
 }
 
+// MIME types for static files
+const MIME = {
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+  '.map': 'application/json',
+};
+
+function serveStatic(req, res) {
+  // Map /_next/static/* to .next/static/*
+  if (req.url.startsWith('/_next/static/')) {
+    const filePath = path.join(__dirname, '.next', 'static', req.url.slice(14).split('?')[0]);
+    return sendFile(filePath, res);
+  }
+  // Map /_next/* to .next/*
+  if (req.url.startsWith('/_next/')) {
+    const filePath = path.join(__dirname, '.next', req.url.slice(6).split('?')[0]);
+    return sendFile(filePath, res);
+  }
+  return false;
+}
+
+function sendFile(filePath, res) {
+  try {
+    if (!fs.existsSync(filePath)) return false;
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = MIME[ext] || 'application/octet-stream';
+    const content = fs.readFileSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': mime,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    });
+    res.end(content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 log('=== SERVER STARTING ===');
 log(`Node ${process.version} | PORT=${port} | CWD=${process.cwd()}`);
 
@@ -37,6 +87,9 @@ if (!fs.existsSync(nextDir)) {
       res.end(JSON.stringify({ ready: isReady, error: startError, uptime: process.uptime() }));
       return;
     }
+
+    // Serve static files first
+    if (serveStatic(req, res)) return;
 
     if (startError) {
       res.writeHead(500, { 'Content-Type': 'text/html' });
