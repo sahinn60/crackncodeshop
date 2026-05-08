@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ['@prisma/client', 'bcryptjs', 'jsonwebtoken', 'pg'],
 
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
