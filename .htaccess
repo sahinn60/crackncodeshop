@@ -1,5 +1,13 @@
 DirectoryIndex disabled
 
+RewriteEngine On
+
+# Serve _next/static files directly
+RewriteRule ^_next/static/(.*)$ .next/static/$1 [L]
+
+# Serve public files directly
+RewriteRule ^favicon.ico$ public/favicon.ico [L]
+RewriteRule ^(.+\.(svg|png|jpg|jpeg|webp|ico|woff2|woff|ttf))$ public/$1 [L]
+
 PassengerAppType node
-PassengerStartupFile server.js
-PassengerNodejs /usr/bin/node22
+PassengerStartupFile app.js
