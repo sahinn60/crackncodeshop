@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "echo 'Build skipped - pre-built locally'",
     "build:local": "prisma generate && next build",
-    "postinstall": "prisma generate || true",
     "start": "NODE_ENV=production node server.js",
     "start:passenger": "NODE_ENV=production node app.js",
     "lint": "eslint"
@@ -30,7 +29,6 @@
     "next": "16.2.4",
     "next-cloudinary": "^6.17.5",
     "pg": "^8.20.0",
-    "prisma": "^7.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.1",
@@ -47,6 +45,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
