@@ -32,7 +32,7 @@ async function getSettings() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const { siteName, tagline, seoDescription } = await getSettings();
-  const description = seoDescription || `${tagline} — Premium tools, templates, and growth systems for modern businesses.`;
+  const description = seoDescription || 'Modern digital solutions for businesses — websites, marketing, automation, and scalable growth systems.';
 
   return {
     title: { default: `${siteName} — ${tagline}`, template: `%s | ${siteName}` },
