@@ -5,7 +5,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import Script from "next/script";
-import { prisma } from "@/lib/prisma";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -17,76 +16,66 @@ const inter = Inter({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://crackncodepremium.com';
 
-async function getSettings() {
-  try {
-    const settings = await prisma.settings.findUnique({ where: { id: 'singleton' } });
-    return {
-      siteName: settings?.siteName || 'CrackncodePremium',
-      tagline: settings?.tagline || 'Digital Solutions at Your Fingertips',
-      seoDescription: settings?.seoDescription || '',
-    };
-  } catch {
-    return { siteName: 'CrackncodePremium', tagline: 'Digital Solutions at Your Fingertips', seoDescription: '' };
-  }
-}
+export const metadata: Metadata = {
+  title: {
+    default: 'Crackncodepremium — Digital Solutions at Your Fingertips',
+    template: '%s | Crackncodepremium',
+  },
+  description: 'Modern digital solutions for businesses — websites, marketing, automation, and scalable growth systems.',
+  metadataBase: new URL(SITE_URL),
+  icons: { icon: '/favicon.ico' },
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    type: 'website',
+    siteName: 'Crackncodepremium',
+    title: 'Crackncodepremium',
+    description: 'Digital Solutions at Your Fingertips',
+    url: SITE_URL,
+    locale: 'en_US',
+    images: [
+      {
+        url: `${SITE_URL}/og-image.png`,
+        width: 1200,
+        height: 630,
+        alt: 'Crackncodepremium — Digital Solutions at Your Fingertips',
+        type: 'image/png',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Crackncodepremium',
+    description: 'Digital Solutions at Your Fingertips',
+    images: [`${SITE_URL}/og-image.png`],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large' as const, 'max-snippet': -1 },
+  },
+};
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { siteName, tagline, seoDescription } = await getSettings();
-  const description = seoDescription || 'Modern digital solutions for businesses — websites, marketing, automation, and scalable growth systems.';
-
-  return {
-    title: { default: `${siteName} — ${tagline}`, template: `%s | ${siteName}` },
-    description,
-    metadataBase: new URL(SITE_URL),
-    icons: { icon: '/favicon.ico' },
-    alternates: { canonical: SITE_URL },
-    openGraph: {
-      type: 'website',
-      siteName,
-      title: siteName,
-      description: tagline,
-      url: SITE_URL,
-      locale: 'en_US',
-      images: [{ url: '/api/og', width: 1200, height: 630, alt: `${siteName} — ${tagline}`, type: 'image/png' }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: siteName,
-      description: tagline,
-      images: ['/api/og'],
-    },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large' as const, 'max-snippet': -1 },
-    },
-  };
-}
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { siteName, tagline } = await getSettings();
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
       {
         '@type': 'Organization',
         '@id': `${SITE_URL}/#organization`,
-        name: siteName,
+        name: 'Crackncodepremium',
         url: SITE_URL,
-        logo: { '@type': 'ImageObject', url: `${SITE_URL}/api/og` },
-        sameAs: [],
+        logo: { '@type': 'ImageObject', url: `${SITE_URL}/og-image.png` },
       },
       {
         '@type': 'WebSite',
         '@id': `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: siteName,
-        description: tagline,
+        name: 'Crackncodepremium',
+        description: 'Digital Solutions at Your Fingertips',
         publisher: { '@id': `${SITE_URL}/#organization` },
         potentialAction: {
           '@type': 'SearchAction',
