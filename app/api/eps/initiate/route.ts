@@ -94,6 +94,9 @@ export async function POST(req: NextRequest) {
     const token = await getEpsToken();
     const xHash = generateHash(merchantTransactionId);
 
+    console.log('[eps/initiate] Token obtained, calling InitializeEPS...');
+    console.log('[eps/initiate] Order:', order.id, 'Amount:', Math.round(total));
+
     const body = {
       merchantId: process.env.EPS_MERCHANT_ID,
       storeId: process.env.EPS_STORE_ID,
@@ -172,6 +175,7 @@ export async function POST(req: NextRequest) {
       }
     } else {
       const resText = await epsRes.text();
+      console.log('[eps/initiate] EPS response status:', epsRes.status, 'body length:', resText.length, 'body:', resText.slice(0, 300));
       if (!resText) {
         await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
         return NextResponse.json({ error: 'EPS gateway is not responding. Please try again.' }, { status: 502 });
