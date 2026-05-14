@@ -4,10 +4,12 @@ import { AnnouncementBar } from '@/components/shop/AnnouncementBar';
 import { VisitorTracker } from '@/components/shop/VisitorTracker';
 import { MobileBottomNav } from '@/components/shop/MobileBottomNav';
 import { WhatsAppButton } from '@/components/shop/WhatsAppButton';
+import { AttributionTracker } from '@/components/providers/AttributionTracker';
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
+      <AttributionTracker />
       <VisitorTracker />
       <AnnouncementBar />
       <Header />

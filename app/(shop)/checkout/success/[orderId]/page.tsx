@@ -14,6 +14,7 @@ import { Price } from '@/components/ui/Price';
 import { PostPurchaseOffer } from '@/components/shop/UpsellBlock';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useCartStore } from '@/store/useCartStore';
+import { getAttribution, isFromFacebook, isFromTikTok } from '@/lib/attribution';
 
 interface OrderItem {
   id: string;
@@ -51,7 +52,7 @@ export default function SuccessOrderPage() {
       .finally(() => setLoading(false));
   }, [orderId, clearCart]);
 
-  // ─── Pixel Tracking (fires once, deduplication via sessionStorage) ───
+  // ─── Pixel Tracking (attribution-based, fires once, deduplication via sessionStorage) ───
   useEffect(() => {
     if (!order || pixelFired.current) return;
 
@@ -61,13 +62,14 @@ export default function SuccessOrderPage() {
     pixelFired.current = true;
     sessionStorage.setItem(storageKey, '1');
 
+    const attribution = getAttribution();
     const contentIds = order.items.map(i => i.product.id);
     const contentNames = order.items.map(i => i.product.title);
     const categories = Array.from(new Set(order.items.map(i => i.product.category)));
     const eventId = `purchase_${order.id}`;
 
-    // ─── Facebook / Meta Pixel ───
-    if (typeof window !== 'undefined' && (window as any).fbq) {
+    // ─── Facebook / Meta Pixel — ONLY for Facebook-originated traffic ───
+    if (isFromFacebook() && typeof window !== 'undefined' && (window as any).fbq) {
       (window as any).fbq('track', 'Purchase', {
         content_ids: contentIds,
         content_name: contentNames.join(', '),
@@ -85,8 +87,8 @@ export default function SuccessOrderPage() {
       }, { eventID: eventId });
     }
 
-    // ─── TikTok Pixel ───
-    if (typeof window !== 'undefined' && (window as any).ttq) {
+    // ─── TikTok Pixel — ONLY for TikTok-originated traffic ───
+    if (isFromTikTok() && typeof window !== 'undefined' && (window as any).ttq) {
       (window as any).ttq.track('CompletePayment', {
         content_id: contentIds[0],
         content_type: 'product',
@@ -97,12 +99,13 @@ export default function SuccessOrderPage() {
       });
     }
 
-    // ─── Google Analytics 4 (gtag) ───
+    // ─── Google Analytics 4 (gtag) — fires for all traffic (GA4 has its own attribution) ───
     if (typeof window !== 'undefined' && (window as any).gtag) {
       (window as any).gtag('event', 'purchase', {
         transaction_id: order.id,
         value: order.total,
         currency: 'BDT',
+        traffic_source: attribution?.source || 'unknown',
         items: order.items.map(i => ({
           item_id: i.product.id,
           item_name: i.product.title,
@@ -113,10 +116,12 @@ export default function SuccessOrderPage() {
       });
     }
 
-    // ─── GTM dataLayer push ───
+    // ─── GTM dataLayer push — fires for all traffic with source info ───
     if (typeof window !== 'undefined' && (window as any).dataLayer) {
       (window as any).dataLayer.push({
         event: 'purchase',
+        traffic_source: attribution?.source || 'unknown',
+        attribution: attribution || {},
         ecommerce: {
           transaction_id: order.id,
           value: order.total,
