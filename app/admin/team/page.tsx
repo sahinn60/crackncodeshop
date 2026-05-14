@@ -107,13 +107,13 @@ export default function AdminTeamPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team & RBAC</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Team & RBAC</h1>
           <p className="text-sm text-gray-500 mt-1">Manage sub-admins with role-based access control</p>
         </div>
         <Button onClick={() => { setShowForm(true); setForm({ name: '', email: '', permissions: [] }); }} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
-          <Plus className="h-4 w-4" /> Add Sub-Admin
+          <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add Sub-Admin</span><span className="sm:hidden">Add</span>
         </Button>
       </div>
 
@@ -280,53 +280,84 @@ export default function AdminTeamPage() {
           <p className="text-gray-500">No sub-admins yet. Create one to delegate access.</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
-              <tr>
-                {['Member', 'Credential Key', 'Permissions', 'Joined', 'Actions'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {members.map(m => (
-                <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3.5">
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {members.map(m => (
+              <div key={m.id} className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">{m.name}</p>
                     <p className="text-xs text-gray-400">{m.email}</p>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <code className="text-xs font-mono bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md font-bold">{m.credentialKey || '—'}</code>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1">
-                      {m.permissions.length === 0 ? (
-                        <span className="text-xs text-gray-400">None</span>
-                      ) : m.permissions.map(p => (
-                        <span key={p} className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">{p}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-xs text-gray-400">{new Date(m.createdAt).toLocaleDateString()}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => setEditingId(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors" title="Edit permissions">
-                        <Shield className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => handleResetCreds(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-colors" title="Reset credentials">
-                        <RefreshCw className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors" title="Remove">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                    <code className="text-[10px] font-mono bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded mt-1 inline-block">{m.credentialKey || '—'}</code>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => setEditingId(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500"><Shield className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleResetCreds(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-amber-50 hover:text-amber-500"><RefreshCw className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {m.permissions.length === 0 ? (
+                    <span className="text-xs text-gray-400">No permissions</span>
+                  ) : m.permissions.slice(0, 4).map(p => (
+                    <span key={p} className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600">{p}</span>
+                  ))}
+                  {m.permissions.length > 4 && <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-500">+{m.permissions.length - 4}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Member', 'Credential Key', 'Permissions', 'Joined', 'Actions'].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {members.map(m => (
+                  <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3.5">
+                      <p className="text-sm font-medium text-gray-900">{m.name}</p>
+                      <p className="text-xs text-gray-400">{m.email}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <code className="text-xs font-mono bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md font-bold">{m.credentialKey || '—'}</code>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex flex-wrap gap-1">
+                        {m.permissions.length === 0 ? (
+                          <span className="text-xs text-gray-400">None</span>
+                        ) : m.permissions.map(p => (
+                          <span key={p} className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">{p}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-xs text-gray-400">{new Date(m.createdAt).toLocaleDateString()}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={() => setEditingId(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors" title="Edit permissions">
+                          <Shield className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleResetCreds(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-colors" title="Reset credentials">
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors" title="Remove">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Staff Activity Monitor */}

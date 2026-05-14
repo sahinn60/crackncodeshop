@@ -132,19 +132,19 @@ export default function AdminCouponsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Coupons & Announcements</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Coupons & Announcements</h1>
           <p className="text-sm text-gray-500 mt-1">Manage announcement bar coupons shown to customers</p>
         </div>
         <div className="flex gap-2">
           {activeCoupons.length > 0 && (
             <Button variant="outline" onClick={() => setShowPreview(p => !p)} className="gap-2 text-sm">
-              <Eye className="h-4 w-4" /> {showPreview ? 'Hide' : 'Show'} Preview
+              <Eye className="h-4 w-4" /> <span className="hidden sm:inline">{showPreview ? 'Hide' : 'Show'} Preview</span><span className="sm:hidden">{showPreview ? 'Hide' : 'Preview'}</span>
             </Button>
           )}
           <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 text-sm">
-            <Plus className="h-4 w-4" /> Add Coupon
+            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add Coupon</span><span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
@@ -290,7 +290,7 @@ export default function AdminCouponsPage() {
         </div>
       )}
 
-      {/* Coupons Table */}
+      {/* Coupons List */}
       {loading ? (
         <div className="space-y-3">{Array(3).fill(0).map((_, i) => <div key={i} className="h-16 bg-gray-200 rounded-xl animate-pulse" />)}</div>
       ) : coupons.length === 0 ? (
@@ -299,84 +299,137 @@ export default function AdminCouponsPage() {
           <p className="text-gray-500">No coupons yet. Create your first announcement!</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
-              <tr>
-                {['Coupon', 'Message', 'Priority', 'Schedule', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {coupons.map(c => {
-                const now = new Date();
-                const started = new Date(c.startDate) <= now;
-                const ended = c.endDate && new Date(c.endDate) < now;
-                const isLive = c.isActive && started && !ended;
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {coupons.map(c => {
+              const now = new Date();
+              const started = new Date(c.startDate) <= now;
+              const ended = c.endDate && new Date(c.endDate) < now;
+              const isLive = c.isActive && started && !ended;
+              return (
+                <div key={c.id} className={`bg-white border border-gray-200 rounded-xl p-4 ${!c.isActive ? 'opacity-50' : ''}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{c.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{c.code}</span>
+                        <button onClick={() => copyCode(c.code)} className="text-gray-400">
+                          {copied === c.code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                        {c.discount && <span className="text-xs text-gray-400">{c.discount} off</span>}
+                      </div>
+                    </div>
+                    <button onClick={() => handleToggle(c.id)}>
+                      {isLive ? (
+                        <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-green-100 text-green-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Live
+                        </span>
+                      ) : ended ? (
+                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-orange-100 text-orange-600">Expired</span>
+                      ) : !c.isActive ? (
+                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gray-100 text-gray-500">Inactive</span>
+                      ) : (
+                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-100 text-blue-600">Scheduled</span>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 truncate">{c.message}</p>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                    <div className="text-[11px] text-gray-400">
+                      {formatBdt(c.startDate)}
+                      {c.endDate && <span> → {formatBdt(c.endDate)}</span>}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => handleToggle(c.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500"><Power className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-indigo-500"><Pencil className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-                return (
-                  <tr key={c.id} className={`hover:bg-gray-50 transition-colors ${!c.isActive ? 'opacity-50' : ''}`}>
-                    <td className="px-5 py-3.5">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{c.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{c.code}</span>
-                          <button onClick={() => copyCode(c.code)} className="text-gray-400 hover:text-indigo-500 transition-colors">
-                            {copied === c.code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
-                          </button>
-                          {c.discount && <span className="text-xs text-gray-400">{c.discount} off</span>}
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Coupon', 'Message', 'Priority', 'Schedule', 'Status', 'Actions'].map(h => (
+                    <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {coupons.map(c => {
+                  const now = new Date();
+                  const started = new Date(c.startDate) <= now;
+                  const ended = c.endDate && new Date(c.endDate) < now;
+                  const isLive = c.isActive && started && !ended;
+                  return (
+                    <tr key={c.id} className={`hover:bg-gray-50 transition-colors ${!c.isActive ? 'opacity-50' : ''}`}>
+                      <td className="px-5 py-3.5">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{c.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{c.code}</span>
+                            <button onClick={() => copyCode(c.code)} className="text-gray-400 hover:text-indigo-500 transition-colors">
+                              {copied === c.code ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                            </button>
+                            {c.discount && <span className="text-xs text-gray-400">{c.discount} off</span>}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[200px] truncate">{c.message}</td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1 text-sm text-gray-700">
-                        {c.priority > 0 ? <ArrowUp className="h-3 w-3 text-green-500" /> : <ArrowDown className="h-3 w-3 text-gray-300" />}
-                        {c.priority}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="text-xs text-gray-500">
-                        <p>{formatBdt(c.startDate)}</p>
-                        {c.endDate && <p className="text-gray-400">→ {formatBdt(c.endDate)}</p>}
-                        {!c.endDate && <p className="text-gray-300">No end date</p>}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <button onClick={() => handleToggle(c.id)} className="group flex items-center gap-1.5">
-                        {isLive ? (
-                          <span className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
-                            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Live
-                          </span>
-                        ) : ended ? (
-                          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-600">Expired</span>
-                        ) : !c.isActive ? (
-                          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">Inactive</span>
-                        ) : (
-                          <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-600">Scheduled</span>
-                        )}
-                      </button>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleToggle(c.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors" title="Toggle active">
-                          <Power className="h-4 w-4" />
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-gray-600 max-w-[200px] truncate">{c.message}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-1 text-sm text-gray-700">
+                          {c.priority > 0 ? <ArrowUp className="h-3 w-3 text-green-500" /> : <ArrowDown className="h-3 w-3 text-gray-300" />}
+                          {c.priority}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="text-xs text-gray-500">
+                          <p>{formatBdt(c.startDate)}</p>
+                          {c.endDate && <p className="text-gray-400">→ {formatBdt(c.endDate)}</p>}
+                          {!c.endDate && <p className="text-gray-300">No end date</p>}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <button onClick={() => handleToggle(c.id)} className="group flex items-center gap-1.5">
+                          {isLive ? (
+                            <span className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors">
+                              <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Live
+                            </span>
+                          ) : ended ? (
+                            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-600">Expired</span>
+                          ) : !c.isActive ? (
+                            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">Inactive</span>
+                          ) : (
+                            <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-600">Scheduled</span>
+                          )}
                         </button>
-                        <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-indigo-500 transition-colors">
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={() => handleToggle(c.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors" title="Toggle active">
+                            <Power className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-indigo-500 transition-colors">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

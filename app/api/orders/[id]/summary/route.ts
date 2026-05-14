@@ -16,11 +16,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       total: true,
       status: true,
       createdAt: true,
+      user: { select: { name: true, email: true } },
       items: {
         select: {
           id: true,
           price: true,
-          product: { select: { id: true, title: true, imageUrl: true, category: true } },
+          product: { select: { id: true, title: true, imageUrl: true, category: true, price: true } },
         },
       },
     },

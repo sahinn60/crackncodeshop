@@ -269,10 +269,10 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Products</h1>
-        <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
-          <Plus className="h-4 w-4" /> Add Product
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">Products</h1>
+        <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 text-xs sm:text-sm">
+          <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Add Product</span><span className="sm:hidden">Add</span>
         </Button>
       </div>
 
@@ -364,14 +364,14 @@ export default function AdminProductsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
+      <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
         <input
-          type="text" placeholder="Search products..." value={search}
+          type="text" placeholder="Search..." value={search}
           onChange={e => { setSearch(e.target.value); setTimeout(load, 300); }}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white w-48"
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 bg-white w-full sm:w-48"
         />
         <select value={sortBy} onChange={e => { setSortBy(e.target.value); setTimeout(load, 100); }}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none bg-white">
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none bg-white flex-1 sm:flex-none">
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
           <option value="price-high">Price: High→Low</option>
@@ -379,13 +379,47 @@ export default function AdminProductsPage() {
           <option value="popular">Most Popular</option>
         </select>
         <select value={authorFilter} onChange={e => { setAuthorFilter(e.target.value); setTimeout(load, 100); }}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none bg-white">
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none bg-white flex-1 sm:flex-none">
           <option value="">All Authors</option>
           {authors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
       </div>
 
-      <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="h-24 bg-gray-200 rounded-xl animate-pulse" />)
+        ) : products.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">No products yet. Add your first product!</p>
+        ) : products.map(p => (
+          <div key={p.id} className="bg-white border border-gray-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              {p.imageUrl ? <img src={p.imageUrl} alt="" className="h-12 w-12 rounded-lg object-cover bg-gray-100 flex-shrink-0" /> : <div className="h-12 w-12 rounded-lg bg-gray-100 flex-shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{p.title}</p>
+                <p className="text-xs text-gray-500">{p.category} {(p as any).authorName ? `· ${(p as any).authorName}` : ''}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-sm font-semibold text-gray-900"><Price amount={p.price} /></span>
+                  {p.oldPrice && p.oldPrice > p.price && <span className="text-xs text-gray-400 line-through"><Price amount={p.oldPrice} /></span>}
+                </div>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button onClick={() => openEdit(p)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg"><Pencil className="h-4 w-4" /></button>
+                <button onClick={() => handleDelete(p.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1 mt-2">
+              {p.isTopSelling && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700">⭐ Top</span>}
+              {p.isBundle && <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-700">📦 Bundle</span>}
+              {p.isPublished ? <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700">Published</span> : <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">Draft</span>}
+              {p.fileUrl ? <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">📁 File</span> : <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-400">No file</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>

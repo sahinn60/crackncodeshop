@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useCartStore } from '@/store/useCartStore';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, ShieldCheck } from 'lucide-react';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -17,8 +17,6 @@ function SuccessContent() {
     sessionStorage.removeItem('eps-payment-pending');
     clearCart();
 
-    // If there's a merchantTransactionId in URL (old flow or direct EPS redirect),
-    // verify via API and redirect to clean URL
     const merchantTransactionId =
       searchParams.get('merchantTransactionId') ||
       searchParams.get('MerchantTransactionId') ||
@@ -31,7 +29,6 @@ function SuccessContent() {
       null;
 
     if (merchantTransactionId || epsTransactionId) {
-      // Verify and redirect to clean URL
       fetch('/api/eps/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +44,6 @@ function SuccessContent() {
         })
         .catch(() => setShowFallback(true));
     } else {
-      // No transaction params — show generic success or redirect to dashboard
       setShowFallback(true);
     }
   }, []);
@@ -59,10 +55,14 @@ function SuccessContent() {
           <CheckCircle className="h-10 w-10 text-green-500" />
         </div>
         <h2 className="text-2xl font-bold text-dark mb-2">Payment Successful!</h2>
-        <p className="text-gray-500 mb-6 max-w-sm">Your order has been processed. Check your dashboard for access to your products.</p>
+        <p className="text-gray-500 mb-2 max-w-sm">Your order has been processed successfully.</p>
+        <div className="flex items-center gap-2 mb-6">
+          <ShieldCheck className="h-4 w-4 text-green-500" />
+          <span className="text-sm text-gray-500">Your products are ready in your dashboard</span>
+        </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button className="bg-primary text-white" asChild>
-            <Link href="/dashboard">Go to Dashboard</Link>
+          <Button className="bg-primary text-white gap-2 font-semibold" asChild>
+            <Link href="/dashboard">Go to My Library</Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href="/products">Continue Shopping</Link>
@@ -75,7 +75,8 @@ function SuccessContent() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-gray-500">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="text-sm font-medium">Processing your payment...</p>
+      <p className="text-sm font-medium">Verifying your payment...</p>
+      <p className="text-xs text-gray-400">Please wait, do not close this page</p>
     </div>
   );
 }

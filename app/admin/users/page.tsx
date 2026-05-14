@@ -110,61 +110,97 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead className="bg-gray-50">
-              <tr>
-                {['User', 'Role', 'Orders', 'Joined', 'Actions'].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {isLoading ? (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">Loading...</td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">No users found.</td></tr>
-              ) : filtered.map(u => (
-                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold flex-shrink-0">
-                        {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{u.name}</p>
-                        <p className="text-xs text-gray-400">{u.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : u.role === 'SUB_ADMIN' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-sm text-gray-600">{u._count.orders}</td>
-                  <td className="px-5 py-3.5 text-xs text-gray-400">{new Date(u.createdAt).toLocaleDateString()}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => openAccess(u)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-                      >
-                        <KeyRound className="h-3.5 w-3.5" /> Access
-                      </button>
-                      {u.id !== currentUser?.id && !u.protected && (
-                        <button onClick={() => deleteUser(u.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => <div key={i} className="h-20 bg-gray-200 rounded-xl animate-pulse" />)
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-gray-400 text-sm py-10">No users found.</p>
+        ) : filtered.map(u => (
+          <div key={u.id} className="bg-white border border-gray-200 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold flex-shrink-0">
+                {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{u.name}</p>
+                <p className="text-xs text-gray-400 truncate">{u.email}</p>
+              </div>
+              <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : u.role === 'SUB_ADMIN' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-600'}`}>
+                {u.role}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span>{u._count.orders} orders</span>
+                <span>{new Date(u.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => openAccess(u)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-600 rounded-lg">
+                  <KeyRound className="h-3 w-3" /> Access
+                </button>
+                {u.id !== currentUser?.id && !u.protected && (
+                  <button onClick={() => deleteUser(u.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-100">
+          <thead className="bg-gray-50">
+            <tr>
+              {['User', 'Role', 'Orders', 'Joined', 'Actions'].map(h => (
+                <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50">
+            {isLoading ? (
+              <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">Loading...</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">No users found.</td></tr>
+            ) : filtered.map(u => (
+              <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-bold flex-shrink-0">
+                      {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{u.name}</p>
+                      <p className="text-xs text-gray-400">{u.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-3.5">
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${u.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700' : u.role === 'SUB_ADMIN' ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {u.role}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5 text-sm text-gray-600">{u._count.orders}</td>
+                <td className="px-5 py-3.5 text-xs text-gray-400">{new Date(u.createdAt).toLocaleDateString()}</td>
+                <td className="px-5 py-3.5">
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => openAccess(u)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors">
+                      <KeyRound className="h-3.5 w-3.5" /> Access
+                    </button>
+                    {u.id !== currentUser?.id && !u.protected && (
+                      <button onClick={() => deleteUser(u.id)} className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Access Modal */}
