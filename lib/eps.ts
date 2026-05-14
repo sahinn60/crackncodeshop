@@ -65,11 +65,15 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
   const username = process.env.EPS_USERNAME!;
   const xHash = generateHash(username);
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+
   const res = await fetch(`${EPS_BASE}/Auth/GetToken`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-hash': xHash },
     body: JSON.stringify({ userName: username, password: process.env.EPS_PASSWORD }),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
 
   if (res.status === 429) {
     // Rate limited — check DB cache one more time (another invocation may have refreshed it)
