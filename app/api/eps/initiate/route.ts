@@ -177,12 +177,38 @@ export async function POST(req: NextRequest) {
       const resText = await epsRes.text();
       console.log('[eps/initiate] EPS response status:', epsRes.status, 'body length:', resText.length, 'body:', resText.slice(0, 300));
       if (!resText) {
-        await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
-        return NextResponse.json({ error: 'EPS gateway is not responding. Please try again.' }, { status: 502 });
-      }
-      try { epsData = JSON.parse(resText); } catch {
-        await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
-        return NextResponse.json({ error: 'EPS gateway returned an invalid response. Please try again.' }, { status: 502 });
+        // Empty response likely means expired token — retry with fresh token
+        console.log('[eps/initiate] Empty response, retrying with fresh token...');
+        clearTokenCache();
+        const freshToken = await getEpsToken(true);
+        const freshHash = generateHash(merchantTransactionId);
+        const controller3 = new AbortController();
+        const timeout3 = setTimeout(() => controller3.abort(), 30000);
+        const retryRes2 = await fetch(`${EPS_BASE}/EPSEngine/InitializeEPS`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-hash': freshHash,
+            Authorization: `Bearer ${freshToken}`,
+          },
+          body: JSON.stringify(body),
+          signal: controller3.signal,
+        }).finally(() => clearTimeout(timeout3));
+        const retryText2 = await retryRes2.text();
+        console.log('[eps/initiate] Retry response:', retryRes2.status, retryText2.slice(0, 300));
+        if (!retryText2) {
+          await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+          return NextResponse.json({ error: 'EPS gateway is not responding. Please try again.' }, { status: 502 });
+        }
+        try { epsData = JSON.parse(retryText2); } catch {
+          await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+          return NextResponse.json({ error: 'EPS gateway returned an invalid response. Please try again.' }, { status: 502 });
+        }
+      } else {
+        try { epsData = JSON.parse(resText); } catch {
+          await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+          return NextResponse.json({ error: 'EPS gateway returned an invalid response. Please try again.' }, { status: 502 });
+        }
       }
     }
 

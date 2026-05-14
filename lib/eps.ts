@@ -19,14 +19,8 @@ async function getCachedToken(): Promise<string | null> {
 
   // Check database
   try {
-    const settings = await prisma.settings.findUnique({
-      where: { id: 'singleton' },
-      select: { footerText: true }, // reuse footerText temporarily? No, use a dedicated approach
-    });
-    // Store token in a simple key-value approach using Settings model
-    // We'll use the ActivityLog model to store the token
     const cached = await prisma.activityLog.findFirst({
-      where: { action: 'eps_token', createdAt: { gt: new Date(Date.now() - 55 * 60 * 1000) } },
+      where: { action: 'eps_token', createdAt: { gt: new Date(Date.now() - 45 * 60 * 1000) } },
       orderBy: { createdAt: 'desc' },
     });
     if (cached) {
@@ -35,6 +29,8 @@ async function getCachedToken(): Promise<string | null> {
         memToken = { token: data.token, expiresAt: data.expiresAt };
         return data.token;
       }
+      // Token expired in DB, clean it up
+      await prisma.activityLog.deleteMany({ where: { action: 'eps_token' } }).catch(() => {});
     }
   } catch {}
   return null;
@@ -62,6 +58,7 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
     if (cached) return cached;
   }
 
+  console.log('[eps] Fetching fresh token from EPS...');
   const username = process.env.EPS_USERNAME!;
   const xHash = generateHash(username);
 
@@ -76,7 +73,6 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
   }).finally(() => clearTimeout(timeout));
 
   if (res.status === 429) {
-    // Rate limited — check DB cache one more time (another invocation may have refreshed it)
     const cached = await getCachedToken();
     if (cached) return cached;
     throw new Error('EPS authentication rate limited. Please try again in a few minutes.');
@@ -97,10 +93,12 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
   
   if (!data.token) throw new Error(data.errorMessage || 'Failed to get EPS token');
 
+  // Use 45 min expiry (EPS tokens last ~60 min) to avoid edge cases
   const expiresAt = data.expireDate
-    ? new Date(data.expireDate).getTime() - 5 * 60 * 1000
-    : Date.now() + 55 * 60 * 1000;
+    ? new Date(data.expireDate).getTime() - 10 * 60 * 1000
+    : Date.now() + 45 * 60 * 1000;
 
+  console.log('[eps] Fresh token obtained, expires in', Math.round((expiresAt - Date.now()) / 60000), 'min');
   await saveTokenToCache(data.token, expiresAt);
   return data.token;
 }
