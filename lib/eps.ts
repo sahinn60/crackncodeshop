@@ -83,7 +83,14 @@ export async function getEpsToken(forceRefresh = false): Promise<string> {
     throw new Error(`EPS auth failed (${res.status}): ${text}`);
   }
 
-  const data = await res.json();
+  const resText = await res.text();
+  if (!resText) throw new Error('EPS auth returned empty response');
+  
+  let data: any;
+  try { data = JSON.parse(resText); } catch {
+    throw new Error(`EPS auth returned invalid JSON: ${resText.slice(0, 200)}`);
+  }
+  
   if (!data.token) throw new Error(data.errorMessage || 'Failed to get EPS token');
 
   const expiresAt = data.expireDate
