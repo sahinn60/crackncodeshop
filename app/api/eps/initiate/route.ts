@@ -70,6 +70,29 @@ export async function POST(req: NextRequest) {
 
   const merchantTransactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
+  // ✅ FREE ORDER — skip payment gateway entirely
+  if (Math.round(total) <= 0) {
+    const order = await prisma.order.create({
+      data: {
+        userId: user!.id,
+        total: 0,
+        status: 'COMPLETED',
+        epsMerchantTxId: merchantTransactionId,
+        epsTransactionId: 'FREE',
+        items: {
+          create: products.map(p => ({
+            productId: p.id,
+            price: 0,
+          })),
+        },
+      },
+    });
+    return NextResponse.json({
+      free: true,
+      orderId: order.id,
+    });
+  }
+
   // ✅ CREATE PENDING ORDER BEFORE PAYMENT
   // This ensures we NEVER lose a successful payment
   const order = await prisma.order.create({
@@ -104,7 +127,7 @@ export async function POST(req: NextRequest) {
       transactionTypeId: 1,
       financialEntityId: 0,
       transitionStatusId: 0,
-      totalAmount: Math.round(total),
+      totalAmount: Math.max(1, Math.round(total)),
       successUrl: `${origin}/api/eps/callback?merchantTransactionId=${merchantTransactionId}`,
       failUrl: `${origin}/checkout/fail`,
       cancelUrl: `${origin}/checkout/fail`,
