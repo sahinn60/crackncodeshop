@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         include: { user: { select: { name: true } }, product: { select: { title: true } } },
       }),
       prisma.analytics.findMany({ where: dateFilterAnalytics, select: { date: true, ip: true, device: true, path: true } }),
-      prisma.order.findMany({ where: { createdAt: { gte: monthAgo } }, select: { total: true } }),
+      prisma.order.findMany({ where: { createdAt: { gte: monthAgo } }, select: { total: true, status: true } }),
       prisma.product.findMany({ select: { category: true, price: true } }),
       prisma.product.findMany({
         where: { cartCount: { gt: 0 } },
@@ -59,18 +59,22 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // KPIs
-    const totalRevenue = rangeOrders.reduce((s, o) => s + o.total, 0);
+    // KPIs — ONLY count COMPLETED orders for revenue
+    const completedOrdersList = rangeOrders.filter(o => o.status === 'COMPLETED');
+    const totalRevenue = completedOrdersList.reduce((s, o) => s + o.total, 0);
     const totalOrders = rangeOrders.length;
-    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const completedOrders = rangeOrders.filter(o => o.status === 'COMPLETED').length;
+    const avgOrderValue = completedOrdersList.length > 0 ? totalRevenue / completedOrdersList.length : 0;
+    const completedOrders = completedOrdersList.length;
+    const pendingOrders = rangeOrders.filter(o => o.status === 'PENDING').length;
+    const cancelledOrders = rangeOrders.filter(o => o.status === 'CANCELLED').length;
+    const refundedOrders = rangeOrders.filter(o => o.status === 'REFUNDED').length;
     const newUsersThisWeek = await prisma.user.count({ where: { createdAt: { gte: weekAgo } } });
 
     // Conversion rate: orders / unique visitors in range
     const uniqueVisitors = new Set(visitors.map(v => v.ip)).size;
     const conversionRate = uniqueVisitors > 0 ? (totalOrders / uniqueVisitors) * 100 : 0;
 
-    // Daily chart data
+    // Daily chart data — ONLY completed orders for revenue
     const days = range === 'all' ? 30 : parseInt(range);
     const dailyRevenue: { date: string; revenue: number; orders: number }[] = [];
     for (let i = days - 1; i >= 0; i--) {
@@ -79,7 +83,10 @@ export async function GET(req: NextRequest) {
       const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
       let rev = 0, cnt = 0;
       rangeOrders.forEach(o => {
-        if (new Date(o.createdAt).toISOString().slice(0, 10) === dateStr) { rev += o.total; cnt++; }
+        if (new Date(o.createdAt).toISOString().slice(0, 10) === dateStr) {
+          if (o.status === 'COMPLETED') rev += o.total;
+          cnt++;
+        }
       });
       dailyRevenue.push({ date: label, revenue: Math.round(rev), orders: cnt });
     }
@@ -89,7 +96,7 @@ export async function GET(req: NextRequest) {
     rangeOrders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
     const orderStatusData = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
 
-    // Monthly revenue trend (last 6 months — always shown)
+    // Monthly revenue trend (last 6 months — ONLY completed)
     const monthlyRevenue: { month: string; revenue: number; orders: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -99,7 +106,7 @@ export async function GET(req: NextRequest) {
       let rev = 0, cnt = 0;
       allOrders.forEach(o => {
         const t = new Date(o.createdAt);
-        if (t >= start && t < end) { rev += o.total; cnt++; }
+        if (t >= start && t < end && o.status === 'COMPLETED') { rev += o.total; cnt++; }
       });
       monthlyRevenue.push({ month: label, revenue: Math.round(rev), orders: cnt });
     }
@@ -153,7 +160,7 @@ export async function GET(req: NextRequest) {
     const purchasers = rangeUserIds.size;
     const completedPurchasers = completedOrders;
 
-    const monthRevenue = monthOrders.reduce((s, o) => s + o.total, 0);
+    const monthRevenue = monthOrders.filter(o => (o as any).status === 'COMPLETED').reduce((s, o) => s + o.total, 0);
 
     return NextResponse.json({
       // Core KPIs
@@ -164,6 +171,9 @@ export async function GET(req: NextRequest) {
       monthRevenue: isAdmin ? monthRevenue : undefined,
       avgOrderValue: isAdmin ? avgOrderValue : undefined,
       completedOrders,
+      pendingOrders,
+      cancelledOrders,
+      refundedOrders,
       newUsersThisWeek,
       totalCategories,
       conversionRate: isAdmin ? conversionRate : undefined,
