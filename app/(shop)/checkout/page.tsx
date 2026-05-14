@@ -287,14 +287,6 @@ export default function CheckoutPage() {
         customerPhone: billing.phone,
         couponCode: appliedCoupon?.code || undefined,
       });
-
-      // Free order — no payment needed
-      if (data.free && data.orderId) {
-        clearCart();
-        router.push(`/checkout/success/${data.orderId}`);
-        return;
-      }
-
       sessionStorage.setItem('eps-payment-pending', '1');
       window.location.href = data.redirectUrl;
     } catch (err: any) {
