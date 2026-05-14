@@ -91,11 +91,10 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/[^/]*$/, '') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
   try {
-    const token = await getEpsToken();
+    // Always use fresh token - cached tokens cause empty responses
+    clearTokenCache();
+    const token = await getEpsToken(true);
     const xHash = generateHash(merchantTransactionId);
-
-    console.log('[eps/initiate] Token obtained, calling InitializeEPS...');
-    console.log('[eps/initiate] Order:', order.id, 'Amount:', Math.round(total));
 
     const body = {
       merchantId: process.env.EPS_MERCHANT_ID,
