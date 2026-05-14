@@ -3,6 +3,13 @@
  * 
  * Detects traffic source on landing and persists for the session.
  * Used to fire purchase pixels ONLY for attributed traffic sources.
+ * 
+ * Supports:
+ * - Clean short params: ?src=fb, ?src=tt, ?src=g
+ * - Standard params: fbclid, ttclid, gclid
+ * - UTM params: utm_source=facebook/tiktok/google
+ * - Referrer detection
+ * - Session persistence
  */
 
 const STORAGE_KEY = 'traffic_attribution';
@@ -22,6 +29,18 @@ export interface Attribution {
   timestamp: number;
 }
 
+// Short param mapping: ?src=fb → facebook
+const SRC_MAP: Record<string, TrafficSource> = {
+  fb: 'facebook',
+  facebook: 'facebook',
+  meta: 'facebook',
+  ig: 'facebook', // Instagram (Meta)
+  tt: 'tiktok',
+  tiktok: 'tiktok',
+  g: 'google',
+  google: 'google',
+};
+
 /** Detect and store attribution on page load */
 export function captureAttribution(): Attribution {
   if (typeof window === 'undefined') {
@@ -35,6 +54,8 @@ export function captureAttribution(): Attribution {
   const params = new URLSearchParams(window.location.search);
   const referrer = document.referrer || '';
 
+  // Extract all tracking params
+  const src = params.get('src') || undefined; // Short param: ?src=fb
   const fbclid = params.get('fbclid') || undefined;
   const ttclid = params.get('ttclid') || undefined;
   const gclid = params.get('gclid') || undefined;
@@ -42,18 +63,35 @@ export function captureAttribution(): Attribution {
   const utm_medium = params.get('utm_medium') || undefined;
   const utm_campaign = params.get('utm_campaign') || undefined;
 
-  // Determine source with priority
+  // Determine source with priority:
+  // 1. Platform click IDs (most reliable)
+  // 2. Short ?src= param
+  // 3. utm_source
+  // 4. Referrer
   let source: TrafficSource = 'direct';
 
-  if (fbclid || utm_source?.toLowerCase() === 'facebook' || utm_source?.toLowerCase() === 'fb' || utm_source?.toLowerCase() === 'meta') {
+  if (fbclid) {
     source = 'facebook';
-  } else if (ttclid || utm_source?.toLowerCase() === 'tiktok' || utm_source?.toLowerCase() === 'tt') {
+  } else if (ttclid) {
     source = 'tiktok';
-  } else if (gclid || utm_source?.toLowerCase() === 'google') {
+  } else if (gclid) {
     source = 'google';
+  } else if (src && SRC_MAP[src.toLowerCase()]) {
+    source = SRC_MAP[src.toLowerCase()];
+  } else if (utm_source) {
+    const us = utm_source.toLowerCase();
+    if (us === 'facebook' || us === 'fb' || us === 'meta' || us === 'instagram' || us === 'ig') {
+      source = 'facebook';
+    } else if (us === 'tiktok' || us === 'tt') {
+      source = 'tiktok';
+    } else if (us === 'google') {
+      source = 'google';
+    } else {
+      source = 'other';
+    }
   } else if (referrer) {
     const ref = referrer.toLowerCase();
-    if (ref.includes('facebook.com') || ref.includes('fb.com') || ref.includes('fbcdn.net') || ref.includes('l.facebook.com')) {
+    if (ref.includes('facebook.com') || ref.includes('fb.com') || ref.includes('fbcdn.net') || ref.includes('l.facebook.com') || ref.includes('instagram.com')) {
       source = 'facebook';
     } else if (ref.includes('tiktok.com')) {
       source = 'tiktok';
@@ -65,7 +103,6 @@ export function captureAttribution(): Attribution {
   } else if (utm_source) {
     source = 'other';
   } else {
-    // No params, no referrer = organic/direct
     source = 'direct';
   }
 
@@ -85,6 +122,11 @@ export function captureAttribution(): Attribution {
   // Store in sessionStorage (persists for the session only)
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(attribution));
+  } catch {}
+
+  // Also store in cookie for cross-tab persistence (7 day expiry)
+  try {
+    document.cookie = `_attr=${encodeURIComponent(source)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
   } catch {}
 
   return attribution;
@@ -125,4 +167,21 @@ export function isPaidTraffic(): boolean {
   const attr = getAttribution();
   if (!attr) return false;
   return attr.source === 'facebook' || attr.source === 'tiktok' || attr.source === 'google';
+}
+
+/**
+ * Generate a clean tracking URL
+ * 
+ * Usage:
+ *   trackingUrl('/products/ethical-hacking', 'facebook')
+ *   → /products/ethical-hacking?src=fb
+ */
+export function trackingUrl(path: string, platform: 'facebook' | 'tiktok' | 'google'): string {
+  const shortCodes: Record<string, string> = {
+    facebook: 'fb',
+    tiktok: 'tt',
+    google: 'g',
+  };
+  const separator = path.includes('?') ? '&' : '?';
+  return `${path}${separator}src=${shortCodes[platform]}`;
 }

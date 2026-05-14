@@ -74,9 +74,13 @@ export async function GET(req: NextRequest) {
       const retryRes = await fetch(`${EPS_BASE}/EPSEngine/CheckMerchantTransactionStatus?${queryParam}`, {
         headers: { 'x-hash': xHash, Authorization: `Bearer ${freshToken}` },
       });
-      data = await retryRes.json();
+      const retryText = await retryRes.text();
+      if (!retryText) return NextResponse.redirect(`${origin}/checkout/fail`);
+      try { data = JSON.parse(retryText); } catch { return NextResponse.redirect(`${origin}/checkout/fail`); }
     } else {
-      data = await epsRes.json();
+      const resText = await epsRes.text();
+      if (!resText) return NextResponse.redirect(`${origin}/checkout/fail`);
+      try { data = JSON.parse(resText); } catch { return NextResponse.redirect(`${origin}/checkout/fail`); }
     }
 
     // 3. Check EPS status

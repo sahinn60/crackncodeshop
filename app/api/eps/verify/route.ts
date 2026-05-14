@@ -62,9 +62,13 @@ export async function POST(req: NextRequest) {
       const retryRes = await fetch(`${EPS_BASE}/EPSEngine/CheckMerchantTransactionStatus?${params}`, {
         headers: { 'x-hash': xHash, Authorization: `Bearer ${freshToken}` },
       });
-      data = await retryRes.json();
+      const retryText = await retryRes.text();
+      if (!retryText) return NextResponse.json({ error: 'EPS returned empty response' }, { status: 502 });
+      try { data = JSON.parse(retryText); } catch { return NextResponse.json({ error: `EPS invalid response: ${retryText.slice(0, 200)}` }, { status: 502 }); }
     } else {
-      data = await epsRes.json();
+      const resText = await epsRes.text();
+      if (!resText) return NextResponse.json({ error: 'EPS returned empty response' }, { status: 502 });
+      try { data = JSON.parse(resText); } catch { return NextResponse.json({ error: `EPS invalid response: ${resText.slice(0, 200)}` }, { status: 502 }); }
     }
 
     // 3. Check payment status

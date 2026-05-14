@@ -154,9 +154,25 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify(body),
       });
-      epsData = await retryRes.json();
+      const retryText = await retryRes.text();
+      if (!retryText) {
+        await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+        return NextResponse.json({ error: 'EPS returned empty response' }, { status: 502 });
+      }
+      try { epsData = JSON.parse(retryText); } catch {
+        await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+        return NextResponse.json({ error: `EPS returned invalid response: ${retryText.slice(0, 200)}` }, { status: 502 });
+      }
     } else {
-      epsData = await epsRes.json();
+      const resText = await epsRes.text();
+      if (!resText) {
+        await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+        return NextResponse.json({ error: 'EPS returned empty response' }, { status: 502 });
+      }
+      try { epsData = JSON.parse(resText); } catch {
+        await prisma.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } });
+        return NextResponse.json({ error: `EPS returned invalid response: ${resText.slice(0, 200)}` }, { status: 502 });
+      }
     }
 
     if (!epsData.RedirectURL) {

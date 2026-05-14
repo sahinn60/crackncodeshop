@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(req: NextRequest) {
   try {
-    const { pathname } = req.nextUrl;
+    const { pathname, searchParams } = req.nextUrl;
     const token = req.cookies.get('auth-token')?.value;
 
     // Parse JWT payload without verifying expiry
-    // (expiry is handled by the API layer + refresh flow)
     let role: string | null = null;
     if (token) {
       try {
